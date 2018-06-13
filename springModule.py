@@ -79,7 +79,7 @@ class MySim:
             start = self.elements[i][1]
             ende = self.elements[i][2]
             if start >= len(self.equations) or ende >= len(self.equations):
-							continue
+                continue
             self.equations[start].append([i,1]);
             if(self.elements[i][0] != TYPE_force):
               self.equations[ende].append([i,-1]);
@@ -100,9 +100,9 @@ class MySim:
         dX = Y[element[2]*4+0]-Y[element[1]*4+0]
         dY = Y[element[2]*4+2]-Y[element[1]*4+2]
         length = sqrt(dX**2+dY**2)
-        print "elem3 "+str(element[3])
-        print (4*(1-dX/element[3])**2)
-        print dX/element[3]
+        print("elem3 "+str(element[3]))
+        print((4*(1-dX/element[3])**2))
+        print(dX/element[3])
         factor = ( 1./(4*(1-dX/element[3])**2) - 1/4 + dX/element[3] )*direction*element[4]
         dX /= length
         dY /= length
@@ -137,7 +137,7 @@ class MySim:
     def F(self, X, Y):
       Z = zeros(len(Y))
       
-      for j in range(0, len(Y)/2):
+      for j in range(0, len(Y)//2):
         if self.point_types[j/2] == POINT_static:
             continue
         Z[j*2+0] = Y[j*2+1]
@@ -150,10 +150,10 @@ class MySim:
     def F2(self, X, Y):
       Z = zeros(len(Y))
       
-      for j in range(0, len(Y)/2):
-        if self.point_types[j/2] == POINT_static:
+      for j in range(0, len(Y)//2):
+        if self.point_types[j//2] == POINT_static:
             continue
-        for el in self.equations[j/2]:
+        for el in self.equations[j//2]:
           Z[j*2+1] += self.Eval_Elem(X, Y, el[0], el[1], j%2);
         Z[j*2+0] = Z[j*2+1]
         Z[j*2+1] -= Y[j*2+1]
@@ -196,7 +196,7 @@ class MySim:
       y = []
       x2 = []
       y2 = []
-      for j in range(0,len(self.all_points[index])/4):
+      for j in range(0,len(self.all_points[index])//4):
         if self.point_types[j] == POINT_dynamic:
           x.append(self.all_points[index][j*4+0])
           y.append(self.all_points[index][j*4+2])
