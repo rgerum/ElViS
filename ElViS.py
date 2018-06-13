@@ -12,6 +12,22 @@ import tkinter.filedialog
 import pickle
 
 import springModule
+import elements
+
+def getClassDefinitions(module, baseclass):
+    class_definitions = []
+    for name in dir(module):
+        current_class_definition = getattr(module, name)
+        try:
+            if issubclass(current_class_definition, baseclass) and current_class_definition != baseclass:
+                class_definitions.append(current_class_definition)
+        except TypeError:
+            pass
+    return class_definitions
+
+def getClassAttributes(current_class_definition):
+    attributes = [name for name in dir(current_class_definition) if name[0] != "_" and not callable(getattr(current_class_definition, name))]
+    return attributes
 
 
 class LabeledEntry:
@@ -49,6 +65,8 @@ class MyApp:
         self.myParent = parent
         self.mysim = springModule.MySim(self);
         parent.title("ElViS Simulator")
+
+        self.field_links = []
 
         ### Our topmost frame is called mainContainer
         self.mainContainer = Frame(parent)  ###
@@ -189,10 +207,10 @@ class MyApp:
         self.config_frame2.pack(fill=BOTH)
 
         self.config_point = LabeledEntry(self.config_frame2, "Plot Point:", 5, self.drawCurve)
-        self.config_point.set(2)
+        self.config_point.set(1)
 
         self.config_coord = StringVar(parent)
-        self.config_coord.set("Y")  # default value
+        self.config_coord.set("X")  # default value
         self.config_coord_m = OptionMenu(self.config_frame2, self.config_coord, *["X", "Y"], command=self.drawCurve)
         self.config_coord_m.pack(side=LEFT)
         self.config_plottype = StringVar(parent)
@@ -255,9 +273,11 @@ class MyApp:
         self.element_label.pack(side=LEFT)
 
         self.element_type = StringVar(parent)
-        self.element_type.set("spring")  # default value
-        self.element_types = ["spring", "viscous", "force", "WLCspring", "SinForce", "copy of"]
-        self.element_types_dict = {"spring": 0, "viscous": 1, "force": 2, "WLCspring": 3, "SinForce": 4, "copy of": -1}
+        self.element_type.set("Spring")  # default value
+        self.element_classes = getClassDefinitions(elements, elements.Element)
+        self.element_types = [cls.__name__ for cls in self.element_classes]
+        #self.element_types = ["Spring", "Viscous", "Force", "WLCSpring", "SinForce", "copy of"]
+        self.element_types_dict = {key: index for index, key in enumerate(self.element_types)}
         self.element_type_m = OptionMenu(self.elements_frame, self.element_type, *self.element_types,
                                          command=self.updateElements)
         self.element_type_m.pack(side=LEFT)
@@ -273,6 +293,14 @@ class MyApp:
         self.element_b = LabeledEntry(self.elements_frame1, "B:", 3, self.updateElements)
         self.element_c = LabeledEntry(self.elements_frame1, "C:", 3, self.updateElements)
         self.element_d = LabeledEntry(self.elements_frame1, "D:", 3, self.updateElements)
+
+        self.elements_frame1 = Frame(self.right_frame)
+        self.elements_frame1.pack(fill=BOTH)
+
+        self.element_e = LabeledEntry(self.elements_frame1, "E:", 3, self.updateElements)
+        self.element_f = LabeledEntry(self.elements_frame1, "F:", 3, self.updateElements)
+        self.element_g = LabeledEntry(self.elements_frame1, "G:", 3, self.updateElements)
+        self.element_h = LabeledEntry(self.elements_frame1, "H:", 3, self.updateElements)
 
         self.elements_frame2 = Frame(self.right_frame)
         self.elements_frame2.pack(fill=BOTH)
@@ -312,12 +340,13 @@ class MyApp:
                 self.element_list.select_set(len(self.mysim.elements) - 1)
             self.selected_element.set(len(self.mysim.elements) - 1)
             print((len(self.mysim.elements) - 1))
-        self.updateElements()
         self.selectElement(0)
+        self.updateElements()
+
 
     def newElement(self):
         self.time = 0
-        self.mysim.add_element(0, 0, 0, 0, 0)
+        self.mysim.add_element(springModule.Spring(0, 1))
         self.selected_element.set(len(self.mysim.elements) - 1)
         self.updateElements()
         self.selectElement(0)
@@ -328,54 +357,42 @@ class MyApp:
         print(index)
         if len(index) == 0:
             return
-        if (len(index)):
+        if len(index):
             index = index[0]
         else:
             index = -1
-        typ = self.mysim.elements[index][0]
+
+        element = self.mysim.elements[index]
+
+        typ = self.element_types.index(element.__class__.__name__)
         if index in self.copyindex:
             typ = -1
         self.selected_element.set(index)
-        self.element_start.set(self.mysim.elements[index][1])
-        self.element_drawoffset.set(self.mysim.elements[index][5])
-        if typ == 2:
+
+        self.element_type.set(self.element_types[typ])
+
+        self.field_links = []
+        self.field_links.append([self.element_start, "start", int])
+        if len(element.targets()) == 1:
             self.element_end.setName(0, 1)
-            self.element_end.set(-1)
         else:
             self.element_end.setName("End:", 1)
-            self.element_end.set(self.mysim.elements[index][2])
-        if typ == 0 or typ == 3:
-            self.element_a.setName("Restlength:", 1)
-            self.element_b.setName("Strength:", 1)
-            self.element_c.setName(0, 1)
-            self.element_d.setName(0, 1)
-            self.element_a.set(self.mysim.elements[index][3])
-            self.element_b.set(self.mysim.elements[index][4])
-        elif typ == 1:
-            self.element_a.setName("Strength:", 1)
-            self.element_b.setName(0, 1)
-            self.element_c.setName(0, 1)
-            self.element_d.setName(0, 1)
-            self.element_a.set(self.mysim.elements[index][3])
-            self.element_b.set(0)
-        elif typ == 2 or typ == 4:
-            self.element_a.setName("X:", 1)
-            self.element_b.setName("Y:", 1)
-            self.element_c.setName("ts:", 1)
-            self.element_d.setName("te:", 1)
-            self.element_a.set(self.mysim.elements[index][3][0])
-            self.element_b.set(self.mysim.elements[index][3][1])
-            self.element_c.set(self.mysim.elements[index][4][0])
-            self.element_d.set(self.mysim.elements[index][4][1])
-        elif typ == -1:
-            self.element_a.setName("Copy of:", 1)
-            self.element_b.setName(0, 1)
-            self.element_c.setName(0, 1)
-            self.element_d.setName(0, 1)
-            self.element_a.set(self.copyindex[index])
-        self.element_type.set(self.element_types[typ]);
-        if index in self.copyindex:
-            self.element_type.set("copy of");
+            self.field_links.append([self.element_end, "end", int])
+        self.field_links.append([self.element_drawoffset, "drawoffset", float])
+
+        fields = [self.element_a, self.element_b, self.element_c, self.element_d, self.element_e, self.element_f, self.element_g, self.element_h]
+        for field in fields:
+            field.setName(0, 1)
+        i = 0
+        for name in getClassAttributes(element.__class__):
+            if name in ["start", "end", "drawoffset"]:
+                continue
+            fields[i].setName(name+":", 1)
+            self.field_links.append([fields[i], name, float])
+            i += 1
+
+        for field, name, type_def in self.field_links:
+            field.set(getattr(element, name))
 
     def updateElements(self, event=0):
         global elements
@@ -384,87 +401,26 @@ class MyApp:
 
         index = int(self.selected_element.get())
 
+        for field, name, type_def in self.field_links:
+            try:
+                setattr(self.mysim.elements[index], name, type_def(field.get()))
+            except ValueError:
+                print("ERROR: could not convert %s to %s" % (field.get(), str(type_def)))
+
         if (index >= 0):
-            try:
-                self.mysim.elements[index][1] = int(self.element_start.get())
-                self.mysim.elements[index][2] = int(self.element_end.get())
-            except:
-                pass
-            try:
-                self.mysim.elements[index][5] = float(self.element_drawoffset.get())
-            except:
-                pass
             typ = self.element_types_dict[self.element_type.get()]
-            if self.mysim.elements[index][0] != typ:
-                self.mysim.elements[index][0] = typ;
-                if typ == 0 or typ == 3:
-                    self.mysim.elements[index][3] = 1
-                    self.mysim.elements[index][4] = 1
-                if typ == 1:
-                    self.mysim.elements[index][3] = 1
-                if typ == 2 or typ == 4:
-                    self.mysim.elements[index][3] = [1, 0]
-                    self.mysim.elements[index][4] = [0, 100]
-                if typ == -1:
-                    try:
-                        self.copyindex[index] = int(self.element_a.get())
-                    except:
-                        self.copyindex[index] = 0
-                elif index in self.copyindex:
-                    del self.copyindex[index]
+            current_type = self.element_types.index(self.mysim.elements[index].__class__.__name__)
+            if current_type != typ:
+                self.mysim.elements[index].__class__ = self.element_classes[typ]
                 self.selectElement(0)
-            else:
-                if typ == 0 or typ == 3:
-                    try:
-                        self.mysim.elements[index][3] = float(self.element_a.get())
-                        self.mysim.elements[index][4] = float(self.element_b.get())
-                    except:
-                        pass
-                if typ == 1:
-                    try:
-                        self.mysim.elements[index][3] = float(self.element_a.get())
-                    except:
-                        pass
-                if typ == 2 or typ == 4:
-                    try:
-                        self.mysim.elements[index][3] = [float(self.element_a.get()), float(self.element_b.get())]
-                        self.mysim.elements[index][4] = [float(self.element_c.get()), float(self.element_d.get())]
-                    except:
-                        pass
-                if typ == 3:
-                    try:
-                        self.mysim.elements[index][3] = [float(self.element_a.get()), float(self.element_b.get())]
-                        self.mysim.elements[index][4] = [float(self.element_c.get()), float(self.element_d.get())]
-                    except:
-                        pass
-                if typ == -1:
-                    try:
-                        self.copyindex[index] = int(self.element_a.get())
-                    except:
-                        self.copyindex[index] = 0
-            if typ == -1 and index in self.copyindex and self.copyindex[index] < len(self.mysim.elements):
-                self.mysim.elements[index][0] = self.mysim.elements[self.copyindex[index]][0]
-                self.mysim.elements[index][3] = self.mysim.elements[self.copyindex[index]][3]
-                self.mysim.elements[index][4] = self.mysim.elements[self.copyindex[index]][4]
-            for copier, copyof in self.copyindex.items():
-                if copyof == index:
-                    self.mysim.elements[copier][0] = self.mysim.elements[copyof][0]
-                    self.mysim.elements[copier][3] = self.mysim.elements[copyof][3]
-                    self.mysim.elements[copier][4] = self.mysim.elements[copyof][4]
 
         self.element_list.delete(0, END)
         i = 0
         for element in self.mysim.elements:
-            if i in self.copyindex:
-                self.element_list.insert(END, str(element[1]) + " " + str(element[2]) + " Element Copy of " + str(
-                    self.copyindex[i]))
-            else:
-                self.element_list.insert(END,
-                                         str(element[1]) + " " + str(element[2]) + " Element " + self.element_types[
-                                             element[0]] + " " + str(element[3]) + " " + str(element[4]))
+            self.element_list.insert(END, str(element))
             i += 1
 
-        if (index != -1):
+        if index != -1:
             self.element_list.select_set(index)
         elif len(self.mysim.elements):
             self.element_list.select_set(0)
@@ -497,7 +453,7 @@ class MyApp:
     def selectPoint(self, event):
         self.time = 0
         index = list(map(int, self.point_list.curselection()))
-        if (len(index)):
+        if len(index):
             index = index[0]
         else:
             return
@@ -505,7 +461,9 @@ class MyApp:
         self.point_x.set(self.mysim.points[index * 4 + 0])
         self.point_y.set(self.mysim.points[index * 4 + 2])
         typename = ["static", "dynamic"]
-        self.point_type.set(typename[self.mysim.point_types[index]]);
+        self.point_type.set(typename[self.mysim.point_types[index]])
+
+        self.mysim.serialize()
 
     def updatePoints(self, event=0):
         global points
@@ -537,8 +495,7 @@ class MyApp:
         self.drawPoints()
 
     def drawPoints(self, i=0):
-        if (len(self.mysim.all_points) <= 1):
-            print("OutofRange")
+        if len(self.mysim.all_points) <= 1:
             self.mysim.all_points = [self.mysim.points]
         self.subplot_draw.cla()
         self.mysim.plot_elements(i, self.subplot_draw)
@@ -550,7 +507,9 @@ class MyApp:
 
     def drawCurve(self, event=0):
         self.subplot_curve.cla()
-        if (len(self.mysim.all_points) > 1):
+        self.subplot_curve.set_xlabel("time")
+        self.subplot_curve.set_ylabel("displacement")
+        if len(self.mysim.all_points) > 1:
             try:
                 self.mysim.plotCurve(int(self.config_point.get()), {"X": 0, "Y": 2}[self.config_coord.get()],
                                      self.subplot_curve, self.time, self.config_plottype.get())
@@ -574,7 +533,7 @@ class MyApp:
             self.time_play.config(text="||")
 
     def doplay(self, event=0):
-        if (len(self.mysim.all_points) <= 1):
+        if len(self.mysim.all_points) <= 1:
             return
         self.time = min(self.time + self.mysim.h * 10, self.mysim.end_time)
         self.time_scale.set(self.time)
@@ -605,8 +564,8 @@ class MyApp:
 
     def buttonLoadClick(self):
         filename = tkinter.filedialog.askopenfilename(filetypes=["ElvisStorage {.elv}"])
-        print(("Load " + filename))
-        fp = open(filename, "r")
+        print("Load " + filename)
+        fp = open(filename, "rb")
         del self.mysim
         self.mysim = pickle.load(fp)
         fp.close()
@@ -617,8 +576,10 @@ class MyApp:
 
     def buttonSaveClick(self):
         filename = tkinter.filedialog.asksaveasfilename(filetypes=["ElvisStorage {.elv}"])
-        print(("Save " + filename))
-        fp = open(filename, "w")
+        if not filename.endswith(".elv"):
+            filename += ".elv"
+        print("Save " + filename)
+        fp = open(filename, "wb")
         pickle.dump(self.mysim, fp)
         fp.close()
 
@@ -632,7 +593,7 @@ class MyApp:
         plot = self.mysim.getCurve(int(self.config_point.get()), {"X": 0, "Y": 2}[self.config_coord.get()],
                                    self.subplot_curve, self.time, self.config_plottype.get())
         filename = tkinter.filedialog.asksaveasfilename(filetypes=["Textfile {.txt}"])
-        print(("Save " + filename))
+        print("Save " + filename)
         fp = open(filename, "w")
         for i in range(0, len(plot[0])):
             fp.write(str(plot[0][i]) + ", " + str(plot[1][i]) + "\n")
@@ -641,14 +602,8 @@ class MyApp:
     def buttonRunClick(self):
         self.mysim.create_DE()
         if len(self.mysim.all_points) or 0:
-            #         self.mysim.points = self.mysim.all_points[0]
             del self.mysim.all_points
             self.mysim.all_points = [self.mysim.points]
-        #       copies = []
-        #       for i in range(0, len(self.mysim.elements)):
-        #                 if self.mysim.elements[i][0] == -1:
-        #                     copies.append(i)
-        #                     self.mysim.elements[i] =
 
         self.mysim.end_time = float(self.config_time.get())
         self.mysim.h = float(self.config_delta.get())
