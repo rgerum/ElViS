@@ -35,6 +35,7 @@ class MySim:
         # set the end time and the time step
         self.end_time = 10
         self.h = 0.01
+        self.gamma = 0.01
 
     def serialize(self):
         text = "points = "
@@ -106,7 +107,7 @@ class MySim:
             if self.point_types[j // 2] == POINT_static:
                 continue
             for el in self.equations[j // 2]:
-                Z[j * 2 + 1] += self.Eval_Elem(X, Y, el[0], el[1], j % 2)
+                Z[j * 2 + 1] += self.Eval_Elem(X, Y, el[0], el[1], j % 2) / self.gamma
             Z[j * 2 + 0] = Z[j * 2 + 1]
             Z[j * 2 + 1] -= Y[j * 2 + 1]
 

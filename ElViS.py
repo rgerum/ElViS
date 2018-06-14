@@ -203,6 +203,9 @@ class MyApp:
         self.config_delta = LabeledEntry(self.config_frame, "Delta T:", 5)
         self.config_delta.set(self.mysim.h)
 
+        self.config_gamma = LabeledEntry(self.config_frame, "Gamma:", 5)
+        self.config_gamma.set(self.mysim.gamma)
+
         self.config_frame2 = Frame(self.right_frame)
         self.config_frame2.pack(fill=BOTH)
 
@@ -549,7 +552,8 @@ class MyApp:
     def doplay(self, event=0):
         if len(self.mysim.all_points) <= 1:
             return
-        self.time = min(self.time + self.mysim.h * 10, self.mysim.end_time)
+        #self.time = min(self.time + self.mysim.h * 10, self.mysim.end_time)
+        self.time = min(self.time + 0.1, self.mysim.end_time)
         self.time_scale.set(self.time)
         self.timeChanged()
         if self.time == self.mysim.end_time:
@@ -621,6 +625,7 @@ class MyApp:
 
         self.mysim.end_time = float(self.config_time.get())
         self.mysim.h = float(self.config_delta.get())
+        self.mysim.gamma = float(self.config_gamma.get())
 
         if self.config_type.get() == "Overdamed":
             self.mysim.Overdamed()
