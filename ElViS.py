@@ -339,7 +339,6 @@ class MyApp:
             else:
                 self.element_list.select_set(len(self.mysim.elements) - 1)
             self.selected_element.set(len(self.mysim.elements) - 1)
-            print((len(self.mysim.elements) - 1))
         self.selectElement(0)
         self.updateElements()
 
@@ -354,7 +353,7 @@ class MyApp:
     def selectElement(self, event):
         self.time = 0
         index = list(map(int, self.element_list.curselection()))
-        print(index)
+
         if len(index) == 0:
             return
         if len(index):
@@ -401,13 +400,18 @@ class MyApp:
 
         index = int(self.selected_element.get())
 
-        for field, name, type_def in self.field_links:
-            try:
-                setattr(self.mysim.elements[index], name, type_def(field.get()))
-            except ValueError:
-                print("ERROR: could not convert %s to %s" % (field.get(), str(type_def)))
+        if index >= 0:
+            element = self.mysim.elements[index]
+        else:
+            element = None
 
-        if (index >= 0):
+        if index >= 0:
+            for field, name, type_def in self.field_links:
+                try:
+                    setattr(element, name, type_def(field.get()))
+                except ValueError:
+                    print("ERROR: could not convert %s to %s" % (field.get(), str(type_def)))
+
             typ = self.element_types_dict[self.element_type.get()]
             current_type = self.element_types.index(self.mysim.elements[index].__class__.__name__)
             if current_type != typ:
@@ -436,12 +440,19 @@ class MyApp:
         del self.mysim.points[index * 4 + 2]
         del self.mysim.points[index * 4 + 1]
         del self.mysim.points[index * 4 + 0]
+        del self.mysim.point_types[index]
+
+        self.mysim.all_points = [self.mysim.points]
+
         if index > len(self.mysim.points) // 4 - 1:
             if len(self.mysim.elements) - 1 < 0:
                 self.element_list.selection_clear(0, -1)
             else:
                 self.selected_point.set(len(self.mysim.points) // 4 - 1)
+
+        self.selectPoint("event")
         self.updatePoints()
+
 
     def newPoint(self):
         self.time = 0
@@ -457,11 +468,14 @@ class MyApp:
             index = index[0]
         else:
             return
-        self.selected_point.set(index)
-        self.point_x.set(self.mysim.points[index * 4 + 0])
-        self.point_y.set(self.mysim.points[index * 4 + 2])
-        typename = ["static", "dynamic"]
-        self.point_type.set(typename[self.mysim.point_types[index]])
+        if index >= len(self.mysim.points)//4:
+            index = len(self.mysim.points)//4 - 1
+        if index >= 0:
+            self.selected_point.set(index)
+            self.point_x.set(self.mysim.points[index * 4 + 0])
+            self.point_y.set(self.mysim.points[index * 4 + 2])
+            typename = ["static", "dynamic"]
+            self.point_type.set(typename[self.mysim.point_types[index]])
 
         self.mysim.serialize()
 
@@ -480,14 +494,14 @@ class MyApp:
             except:
                 pass
             types = {"static": 0, "dynamic": 1}
-            self.mysim.point_types[index] = types[self.point_type.get()];
+            self.mysim.point_types[index] = types[self.point_type.get()]
 
         self.point_list.delete(0, END)
         for j in range(0, len(self.mysim.points) // 4):
             self.point_list.insert(END, str(i) + " point " + typename[self.mysim.point_types[j]] + " " + str(
                 self.mysim.points[j * 4 + 0]) + " " + str(self.mysim.points[j * 4 + 2]))
             i += 1
-        if (index != -1):
+        if index != -1:
             self.point_list.select_set(index)
         elif len(self.mysim.points):
             self.point_list.select_set(0)
