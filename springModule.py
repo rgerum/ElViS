@@ -151,6 +151,9 @@ class MySim:
         # plot the different types in different colors
         subplot.plot(points[types == POINT_dynamic, 0], points[types == POINT_dynamic, 1], "bo")
         subplot.plot(points[types == POINT_static, 0], points[types == POINT_static, 1], "ro")
+        for i in range(len(self.point_types)):
+            x, y = self.get_point(index, i)
+            subplot.text(x, y, i)
 
     def get_point(self, index, i):
         return np.array([self.all_points[index][i * 4 + 0], self.all_points[index][i * 4 + 2]])
