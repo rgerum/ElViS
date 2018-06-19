@@ -193,8 +193,8 @@ class MyApp:
         self.config_frame.pack(fill=BOTH)
 
         self.config_type = StringVar(parent)
-        self.config_type.set("Overdamed")  # default value
-        self.config_type_m = OptionMenu(self.config_frame, self.config_type, "Overdamed", "Euler", "RungeKutta")
+        self.config_type.set("Overkutta")  # default value
+        self.config_type_m = OptionMenu(self.config_frame, self.config_type, "Overdamed", "Overkutta", "Euler", "RungeKutta")
         self.config_type_m.pack(side=LEFT)
 
         self.config_time = LabeledEntry(self.config_frame, "Time:", 3)
@@ -205,6 +205,9 @@ class MyApp:
 
         self.config_gamma = LabeledEntry(self.config_frame, "Gamma:", 5)
         self.config_gamma.set(self.mysim.gamma)
+
+        self.config_m = LabeledEntry(self.config_frame, "Mass:", 5)
+        self.config_m.set(self.mysim.m)
 
         self.config_frame2 = Frame(self.right_frame)
         self.config_frame2.pack(fill=BOTH)
@@ -626,9 +629,12 @@ class MyApp:
         self.mysim.end_time = float(self.config_time.get())
         self.mysim.h = float(self.config_delta.get())
         self.mysim.gamma = float(self.config_gamma.get())
+        self.mysim.m = float(self.config_m.get())
 
         if self.config_type.get() == "Overdamed":
             self.mysim.Overdamed()
+        elif self.config_type.get() == "Overkutta":
+            self.mysim.Overkutta()
         elif self.config_type.get() == "Euler":
             self.mysim.Euler()
         elif self.config_type.get() == "RungeKutta":

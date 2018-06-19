@@ -36,6 +36,7 @@ class MySim:
         self.end_time = 10
         self.h = 0.01
         self.gamma = 0.01
+        self.m = 0.01
 
     def serialize(self):
         text = "points = "
@@ -86,30 +87,59 @@ class MySim:
                     self.equations[target].append([i, j])
 
     def Eval_Elem(self, X, Y, index, direction, fGetY):
-        return self.elements[index].eval_raw(X, Y, index, direction, fGetY)
+        return self.elements[index].eval_raw(X, Y, direction, fGetY)
 
     def F(self, X, Y):
+        # newtonian equations of motion
         Z = np.zeros(len(Y))
 
         for j in range(len(Y) // 2):
             if self.point_types[j // 2] == POINT_static:
                 continue
+            # x. = v
             Z[j * 2 + 0] = Y[j * 2 + 1]
+            # iterate over all attached elements
             for el in self.equations[j // 2]:
-                Z[j * 2 + 1] += self.Eval_Elem(X, Y, el[0], el[1], j % 2)
+                # v. = f/m
+                Z[j * 2 + 1] += self.Eval_Elem(X, Y, el[0], el[1], j % 2) / self.m - Y[j * 2 +1]*self.gamma
 
         return Z
 
     def F2(self, X, Y):
+        # reduced equations of motion without inertia effects
+        # x. = F/gamma
+        # v(t+1) = F/gamma
         Z = np.zeros(len(Y))
 
         for j in range(0, len(Y) // 2):
             if self.point_types[j // 2] == POINT_static:
                 continue
             for el in self.equations[j // 2]:
+                # v. = F/gamma
                 Z[j * 2 + 1] += self.Eval_Elem(X, Y, el[0], el[1], j % 2) / self.gamma
+            # x. = v.
             Z[j * 2 + 0] = Z[j * 2 + 1]
-            Z[j * 2 + 1] -= Y[j * 2 + 1]
+            # v. = F/gamma - v
+            Z[j * 2 + 1] -= Y[j * 2 + 1]/self.h
+
+        return Z
+
+    def F3(self, X, Y):
+        # reduced equations of motion without inertia effects
+        # x. = F/gamma
+        # v(t+1) = F/gamma
+        Z = np.zeros(len(Y))
+
+        for j in range(0, len(Y) // 2):
+            if self.point_types[j // 2] == POINT_static:
+                continue
+            for el in self.equations[j // 2]:
+                # v. = F/gamma
+                Z[j * 2 + 1] += self.Eval_Elem(X, Y, el[0], el[1], j % 2) / self.gamma
+            # x. = v.
+            Z[j * 2 + 0] = Z[j * 2 + 1]
+            # v. = - v
+            Z[j * 2 + 1] -= Y[j * 2 + 1]/self.h
 
         return Z
 
@@ -135,12 +165,26 @@ class MySim:
             self.all_points.append(Y)
         return
 
+
     def Overdamed(self):
         X2 = 0
         Y = self.points
         while X2 < self.end_time:
             Y = Y + self.F2(X2, Y) * self.h
             X2 += self.h
+            self.all_points.append(Y)
+        return
+
+    def Overkutta(self):
+        X = 0
+        Y = self.points
+        while X < self.end_time:
+            K1 = self.F2(X, Y) * self.h  # with array result
+            K2 = self.F2(X + self.h / 2, Y + K1 / 2) * self.h
+            K3 = self.F2(X + self.h / 2, Y + K2 / 2) * self.h
+            K4 = self.F2(X + self.h, Y + K3) * self.h
+            Y = Y + (K1 + 2 * K2 + 2 * K3 + K4) / 6
+            X += self.h
             self.all_points.append(Y)
         return
 
@@ -193,7 +237,7 @@ class MySim:
         if typ == "loglog":
             subplot.loglog(curve[0], curve[1], '-')
 
-    def getCurve(self, index, coord, subplot, time, typ):
+    def getCurve(self, index, coord):
         x = []
         z = []
         i = 0

@@ -38,14 +38,14 @@ class Element:
             params.append("%s=%s" % (name, str(getattr(self, name))))
         return "%s(%s)" % (my_class.__name__, ", ".join(params))
 
-    def eval_raw(self, X, Y, index, direction, fGetY):
+    def eval_raw(self, X, Y, direction, fGetY):
         pos1 = np.array(Y[self.start * 4 + 0: self.start * 4 + 4: 2])
         vel1 = np.array(Y[self.start * 4 + 1: self.start * 4 + 4: 2])
 
         pos2 = np.array(Y[self.end * 4 + 0: self.end * 4 + 4: 2])
         vel2 = np.array(Y[self.end * 4 + 1: self.end * 4 + 4: 2])
 
-        return self.eval(X, pos1, pos2, vel1, vel2, index, direction)[fGetY]
+        return self.eval(X, pos1, pos2, vel1, vel2, direction)[fGetY]
 
     def eval(self):
         pass
@@ -74,7 +74,7 @@ class Spring(Element):
         # plot the spring
         subplot.plot(pos[:, 0], pos[:, 1], 'g-')
 
-    def eval(self, t, pos1, pos2, vel1, vel2, index, direction):
+    def eval(self, t, pos1, pos2, vel1, vel2, direction):
         # the difference between the two anchor points
         diff = pos2-pos1
         # calculate the length
@@ -89,7 +89,7 @@ class Spring(Element):
         return "%d-%d Spring" % (self.start, self.end)
 
 class WLCSpring(Spring):
-    def eval(self, t, pos1, pos2, vel1, vel2, index, direction):
+    def eval(self, t, pos1, pos2, vel1, vel2, direction):
         diff = pos2 - pos1
         length = np.linalg.norm(diff)
         factor = (1. / (4 * (1 - length / self.rest) ** 2) - 1 / 4 + length / self.rest) * self.strength
@@ -132,7 +132,7 @@ class Viscous(Element):
         # plot the damper
         subplot.plot(pos[:, 0], pos[:, 1], 'g-')
 
-    def eval(self, t, pos1, pos2, vel1, vel2, index, direction):
+    def eval(self, t, pos1, pos2, vel1, vel2, direction):
         # the difference vectors of the positions and the velocities
         diff = pos2-pos1
         rel_v = vel2 - vel1
@@ -154,6 +154,8 @@ class Force(Element):
     t_end = 10
     strength_x = 1
     strength_y = 0
+    duration_rise = 0.1
+    duration_fall = 0.2
 
     def draw(self, subplot, start, end):
         # difference vector
@@ -170,10 +172,13 @@ class Force(Element):
         # plot the force arrow
         subplot.plot(pos[:, 0], pos[:, 1], 'r-')
 
-    def eval(self, t, pos1, pos2, vel1, vel2, index, direction):
+    def eval(self, t, pos1, pos2, vel1, vel2, direction):
         # the force is only active for times between t_start and t_end
         if self.t_start <= t < self.t_end:
-                return [self.strength_x, self.strength_y]
+            factor1 = (t - self.t_start) / self.duration_rise
+            factor2 = (self.t_end - t) / self.duration_fall
+            factor = np.min([factor1, 1, factor2])
+            return [self.strength_x * factor, self.strength_y * factor]
         return [0, 0]
 
     def __str__(self):
@@ -183,7 +188,7 @@ class Force(Element):
         return [self.start]
 
 class SinForce(Force):
-    def eval(self, t, pos1, pos2, vel1, vel2, index, direction):
+    def eval(self, t, pos1, pos2, vel1, vel2, direction):
         # the force is only active for times between t_start and t_end
         if self.t_start <= t < self.t_end:
             return np.array([self.strength_x, self.strength_y]) * np.cos(t * 2 * np.pi)
@@ -194,6 +199,8 @@ class ForceGenerator(Element):
     strength = 1
     t_start = 0
     t_end = 10
+    duration_rise = 0.1
+    duration_fall = 0.2
 
     def draw(self, subplot, start, end):
         # difference vector
@@ -212,7 +219,7 @@ class ForceGenerator(Element):
         # plot the force arrow
         subplot.plot(pos[:, 0], pos[:, 1], 'r-')
 
-    def eval(self, t, pos1, pos2, vel1, vel2, index, direction):
+    def eval(self, t, pos1, pos2, vel1, vel2, direction):
         # the force is only active for times between t_start and t_end
         if self.t_start <= t < self.t_end:
             # the difference between the two anchor points
@@ -220,7 +227,9 @@ class ForceGenerator(Element):
             # calculate the length
             length = np.linalg.norm(diff)
             # the force magnitude is defined by the strength
-            factor = self.strength
+            factor1 = (t - self.t_start) / self.duration_rise
+            factor2 = (self.t_end - t) / self.duration_fall
+            factor = np.min([factor1, 1, factor2]) * self.strength
             # the direction is the normalized difference vector multiplied by the "direction" (-1 or 1, depending which point is start or end)
             vector = diff / length * direction
             return vector * factor
