@@ -99,17 +99,11 @@ class Window(QtWidgets.QWidget):
         self.subplot_curve.set_ylabel("displacement")
         if 1:#len(self.mysim.all_points) > 1:
             try:
-                #elf.mysim.plotCurve(int(self.config_point.get()), {"X": 0, "Y": 2}[self.config_coord.get()],
-                #                     self.subplot_curve, self.time, self.config_plottype.get())
-                self.mysim.plotCurve(2, 0, self.subplot_curve, self.time, "normal")
+                self.mysim.plotCurve(1, 0, self.subplot_curve, self.time, "normal")
             except IOError:
                 pass
-            #for plot in self.hold_plots:
-            #    self.mysim.plotHoldCurve(plot, self.subplot_curve, self.config_plottype.get())
             self.subplot_curve.grid(True)
         self.canvas.figure.canvas.draw()
-        #self.plot_curve.show()
-        #self.toolbar.update()
 
     def buttonRunClick(self):
         print(self.mysim.serialize())

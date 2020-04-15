@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 import springModule
-from elements import Spring, Viscous, Force, ForceGenerator
+from elements import Spring, Dashpot, Force, ForceGenerator
 
 POINT_static = 0
 POINT_dynamic = 1
@@ -32,7 +32,7 @@ def init_sim(sim, k):
     sim.add_element(Spring(0, 1, rest=1, strength=10, drawoffset=0.2))
     #cardiac action potential. see https://www.researchgate.net/figure/Cardiac-action-potential-parameters-and-phases-and-characteristics-of-different_fig2_221912367
     sim.add_element(ForceGenerator(0, 1, strength=1, t_start=0.21, t_end=3.25, duration_rise=0.005, duration_fall=1.5))
-    sim.add_element(Viscous(0, 1, strength=5, drawoffset=-0.2))
+    sim.add_element(Dashpot(0, 1, strength=5, drawoffset=-0.2))
     sim.add_element(Spring(1, 2, rest=1, strength=15))
     sim.add_element(Spring(2, 3, rest=1, strength=100))
 

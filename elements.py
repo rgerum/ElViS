@@ -21,42 +21,31 @@ class Element:
         for key in kwargs:
             setattr(self, key, kwargs[key])
 
-    def draw(self):
+    def draw(self, subplot, points):
         pass
 
-    def eval(self, X, Y, index, direction, fGetY):
+    def eval(self, t, points):
         pass
 
-    def targets(self):
-        return [self.start*4, self.end*4]
+    def derivative(self, t, points):
+        pass
 
     def __repr__(self):
         my_class = self.__class__
         attributes = [name for name in dir(my_class) if
          name[0] != "_" and not callable(getattr(my_class, name)) and not name in ["start", "end"]]
         params = []
-        for target in self.targets():
+        for target in self.target_ids:
             params.append("%d" % target)
         for name in attributes:
             params.append("%s=%s" % (name, str(getattr(self, name))))
         return "%s(%s)" % (my_class.__name__, ", ".join(params))
 
-    def eval_raw(self, X, Y, direction, fGetY):
-        pos1 = np.array(Y[self.start * 4 + 0: self.start * 4 + 4: 2])
-        vel1 = np.array(Y[self.start * 4 + 1: self.start * 4 + 4: 2])
-
-        pos2 = np.array(Y[self.end * 4 + 0: self.end * 4 + 4: 2])
-        vel2 = np.array(Y[self.end * 4 + 1: self.end * 4 + 4: 2])
-
-        return self.eval(X, pos1, pos2, vel1, vel2, direction)[fGetY]
-
-    def eval(self):
-        pass
 
 
 class Spring(Element):
-    r = 1
-    k = 1
+    rest = 1
+    strength = 1
 
     def draw(self, subplot, points):
         start, end = points[:, 0]
@@ -68,7 +57,7 @@ class Spring(Element):
         # pos with gather all points
         pos = start
         # the count of the coil
-        count = int(self.r / 0.1)
+        count = int(self.rest / 0.1)
         # iterate over them
         for i in range(count):
             # and add a point
@@ -84,7 +73,7 @@ class Spring(Element):
         # calculate the length
         length = np.linalg.norm(diff)
         # the force magnitude is x*k
-        factor = (length - self.r) * self.k
+        factor = (length - self.rest) * self.strength
         # the direction is the normalized difference vector multiplied by the "direction" (-1 or 1, depending which point is start or end)
         vector = diff / length * factor
         return np.array([vector, -vector])
@@ -96,30 +85,19 @@ class Spring(Element):
         length = np.linalg.norm(diff)
         #print("derivateive", diff, length)
 
-        a = (1 - self.r / length)
-        x0_d3 = self.r / length ** 3
-        x = self.k * (a + (diff[0] ** 2 + diff[0] * diff[1]) * x0_d3)
-        y = self.k * (a + (diff[1] ** 2 + diff[0] * diff[1]) * x0_d3)
+        a = (1 - self.rest / length)
+        x0_d3 = self.rest / length ** 3
+        x = self.strength * (a + (diff[0] ** 2 + diff[0] * diff[1]) * x0_d3)
+        y = self.strength * (a + (diff[1] ** 2 + diff[0] * diff[1]) * x0_d3)
 
         #print("derivateive", diff, length, a, x0_d3, x, y)
 
         return [[[-x, -y], [0, 0]], [[-x, -y], [0, 0]]]
 
     def __str__(self):
-        return "%d-%d Spring %f" % (self.start, self.end, self.r)
+        return "%d-%d Spring %f" % (self.start, self.end, self.rest)
 
-class WLCSpring(Spring):
-    def eval(self, t, pos1, pos2, vel1, vel2, direction):
-        diff = pos2 - pos1
-        length = np.linalg.norm(diff)
-        factor = (1. / (4 * (1 - length / self.r) ** 2) - 1 / 4 + length / self.r) * self.k
-        vector = diff / length * direction
-        return vector * factor
-
-    def __str__(self):
-        return "%d-%d WLCSpring" % (self.start, self.end)
-
-class Viscous(Element):
+class Dashpot(Element):
     strength = 1
 
     def draw(self, subplot, points):
@@ -157,8 +135,6 @@ class Viscous(Element):
         # the difference vectors of the positions and the velocities
         diff = points[1, 0]-points[0, 0]
         rel_v = points[1, 1]-points[0, 1]
-        #print(points)
-        #print("visc", diff, rel_v)
         # length and normed difference vector
         length = np.linalg.norm(diff)
         diff_normed = diff / length
@@ -172,7 +148,6 @@ class Viscous(Element):
     def derivative(self, t, points):
         # the difference between the two anchor points
         diff = points[1, 0] - points[0, 0]
-        rel_v = points[1, 1]-points[0, 1]
         # calculate the length
         length = np.linalg.norm(diff)
 
@@ -217,7 +192,7 @@ class Force(Element):
     def eval(self, t, points):
         # the force is only active for times between t_start and t_end
         if self.t_start <= t < self.t_end:
-            return np.array([[self.strength_x, self.strength_y]])
+            return [[self.strength_x, self.strength_y]]
             factor1 = (t - self.t_start) / self.duration_rise
             factor2 = (self.t_end - t) / self.duration_fall
             factor = np.min([factor1, 1, factor2])
@@ -232,54 +207,3 @@ class Force(Element):
 
     def targets(self):
         return [self.start]
-
-class SinForce(Force):
-    def eval(self, t, pos1, pos2, vel1, vel2, direction):
-        # the force is only active for times between t_start and t_end
-        if self.t_start <= t < self.t_end:
-            return np.array([self.strength_x, self.strength_y]) * np.cos(t * 2 * np.pi)
-        return [0, 0]
-
-
-class ForceGenerator(Element):
-    strength = 1
-    t_start = 0
-    t_end = 10
-    duration_rise = 0.1
-    duration_fall = 0.2
-
-    def draw(self, subplot, start, end):
-        # difference vector
-        diff = end - start
-        # normalized normal vector
-        norm = np.array([-diff[1], diff[0]]) / np.linalg.norm(diff)
-        # normalized tangential vector
-        tan = diff / np.linalg.norm(diff)
-
-        pos = start
-        for dir in [-1, 1]:
-            pos = np.vstack((pos, start + 0.5*diff, start+0.5*diff + dir * norm * 0.1 - tan * 0.2, [[np.nan, np.nan]]))
-        pos = np.vstack((pos, end))
-        for dir in [-1, 1]:
-            pos = np.vstack((pos, end - 0.5*diff, end - 0.5*diff + dir * norm * 0.1 + tan * 0.2, [[np.nan, np.nan]]))
-        # plot the force arrow
-        subplot.plot(pos[:, 0], pos[:, 1], 'r-')
-
-    def eval(self, t, pos1, pos2, vel1, vel2, direction):
-        # the force is only active for times between t_start and t_end
-        if self.t_start <= t < self.t_end:
-            # the difference between the two anchor points
-            diff = pos2-pos1
-            # calculate the length
-            length = np.linalg.norm(diff)
-            # the force magnitude is defined by the strength
-            factor1 = (t - self.t_start) / self.duration_rise
-            factor2 = (self.t_end - t) / self.duration_fall
-            factor = np.min([factor1, 1, factor2]) * self.strength
-            # the direction is the normalized difference vector multiplied by the "direction" (-1 or 1, depending which point is start or end)
-            vector = diff / length * direction
-            return vector * factor
-        return [0, 0]
-
-    def __str__(self):
-        return "%d-%d ForceGenerator" % (self.start, self.end)
