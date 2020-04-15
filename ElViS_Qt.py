@@ -51,8 +51,6 @@ class Window(QtWidgets.QWidget):
 
         self.config_time = QInputNumber(right_pane, "Time", value=10)
         self.config_delta = QInputNumber(right_pane, "Delta T", value=0.1)
-        self.config_gamma = QInputNumber(right_pane, "Gamma", value=0.01)
-        self.config_m = QInputNumber(right_pane, "Mass", value=0.01)
 
         self.points_input = QtWidgets.QPlainTextEdit()
         right_pane.addWidget(self.points_input)
@@ -114,19 +112,8 @@ class Window(QtWidgets.QWidget):
 
         self.mysim.end_time = float(self.config_time.value())
         self.mysim.h = float(self.config_delta.value())
-        self.mysim.gamma = float(self.config_gamma.value())
-        self.mysim.m = float(self.config_m.value())
 
-        #if self.config_type.get() == "Overdamed":
-        #self.mysim.Overdamed()
-        self.mysim.createPointArray()
-        #elif self.config_type.get() == "Overkutta":
-        #    self.mysim.Overkutta()
-        #elif self.config_type.get() == "Euler":
-        #    self.mysim.Euler()
-        #elif self.config_type.get() == "RungeKutta":
-        #    self.mysim.RungeKutta()
-
+        self.mysim.simulateOverdamped()
         self.time_slider.setRange(0, self.mysim.end_time/self.mysim.h-1)
         self.time_slider.resolution = self.mysim.h
         self.drawCurve()

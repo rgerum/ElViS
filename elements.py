@@ -56,6 +56,9 @@ class Spring(Element):
 
         # pos with gather all points
         pos = start
+        # add the start point with offset
+        pos = np.vstack((pos, start + norm * self.drawoffset))
+
         # the count of the coil
         count = int(self.rest / 0.1)
         # iterate over them
@@ -63,6 +66,7 @@ class Spring(Element):
             # and add a point
             pos = np.vstack((pos, start + dist * (i+0.5)/count + norm * ((i%2)*2-1) * 0.1 + norm * self.drawoffset))
         # add the end point
+        pos = np.vstack((pos, end + norm * self.drawoffset))
         pos = np.vstack((pos, end))
         # plot the spring
         subplot.plot(pos[:, 0], pos[:, 1], 'g-')
@@ -116,6 +120,8 @@ class Dashpot(Element):
 
         # start at the first position
         pos = start
+        pos = np.vstack((pos, start + norm * self.drawoffset))
+
         # iterate over both parts of the sheath
         for dir in [-1, 1]:
             # start at the middle
@@ -127,6 +133,7 @@ class Dashpot(Element):
         # the middle part of the damper
         pos = np.vstack((pos, start + tan * hole_dist + norm * self.drawoffset))
         pos = np.vstack((pos, start + dist - tan * start_dist + norm * self.drawoffset))
+        pos = np.vstack((pos, end + norm * self.drawoffset))
         pos = np.vstack((pos, end))
         # plot the damper
         subplot.plot(pos[:, 0], pos[:, 1], 'g-')

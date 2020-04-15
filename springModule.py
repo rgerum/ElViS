@@ -24,7 +24,7 @@ class MySim:
         self.all_points = []
         self.elements = []
 
-        if 1: # Maxwell
+        if 0: # Maxwell
             # add initial points
             self.add_point(POINT_static, 0, 0)
             self.add_point(POINT_dynamic, 2, 0)
@@ -40,8 +40,8 @@ class MySim:
             self.add_point(POINT_dynamic, 1, 0)
 
             # add initial elements
-            self.add_element(Spring(0, 1, rest=2, strength=1, drawoffset=0.5))
-            self.add_element(Dashpot(0, 1, strength=1, drawoffset=-0.5))
+            self.add_element(Spring(0, 1, rest=1, strength=1, drawoffset=0.25))
+            self.add_element(Dashpot(0, 1, strength=1, drawoffset=-0.25))
             self.add_element(Force(1, strength_x=1, t_start=1, t_end=3))
 
         # set the end time and the time step
@@ -84,7 +84,7 @@ class MySim:
         self.big_point_array = np.concatenate((self.big_point_array, [[[[x, y], [0, 0]]]]), axis=1)
         self.big_point_array_movable = np.concatenate((self.big_point_array_movable, [type == POINT_dynamic]))
 
-    def createPointArray(self):
+    def simulateOverdamped(self):
         self.N = len(self.big_point_array_movable)
         times = np.arange(0, self.end_time, self.h)
         self.times = times
