@@ -13,24 +13,40 @@ POINT_dynamic = 1
 
 
 class MySim:
-    def __init__(self, window):
+    big_point_array = None
+
+    def __init__(self):
         # initialize the empty lists
+        self.point_definitions = []
+
         self.points = []
         self.point_types = []
         self.all_points = []
-
-        # add initial points
-        self.add_point(POINT_static, 0, 0)
-        self.add_point(POINT_dynamic, 1, 0)
-        self.add_point(POINT_dynamic, 2, 0)
-        self.add_point(POINT_dynamic, 3, 0)
-        self.add_point(POINT_static, 4, 0)
-
-        # add initial elements
         self.elements = []
-        self.add_element(Spring(0, 1, rest=1, strength=10))
-        self.add_element(Viscous(0, 1, strength=8))
-        self.add_element(Force(1, strength_x=1, t_start=1, t_end=3))
+
+        if 0:
+            # add initial points
+            self.add_point(POINT_static, 0, 0)
+            self.add_point(POINT_dynamic, 1, 0)
+            #self.add_point(POINT_dynamic, 2, 0)
+            #self.add_point(POINT_dynamic, 3, 0)
+            self.add_point(POINT_static, 4, 0)
+
+            # add initial elements
+            self.add_element(Spring(0, 1, rest=1, strength=1))
+            self.add_element(Viscous(0, 1, strength=1))
+            self.add_element(Force(1, strength_x=1, t_start=1, t_end=3))
+        else:
+
+            # add initial points
+            self.add_point(POINT_static, 0, 0)
+            self.add_point(POINT_dynamic, 1, 0)
+            self.add_point(POINT_dynamic, 2, 0)
+
+            # add initial elements
+            self.add_element(Spring(0, 2, r=2, strength=1, drawoffset=0.5))
+            self.add_element(Viscous(0, 2, rest=2, strength=1, drawoffset=-0.5))
+            self.add_element(Force(2, strength_x=1, t_start=1, t_end=3))
 
         # set the end time and the time step
         self.end_time = 10
@@ -65,185 +81,127 @@ class MySim:
         self.elements.append(element)
 
     def add_point(self, type, x, y):
+        if self.big_point_array is None:
+            self.big_point_array = np.zeros([1, 0, 2, 2])
+            self.big_point_array_movable = np.zeros([0])
+        self.point_definitions.append([type, x, y])
         # add a point to the list of points
         self.points.append(x + .0)
         self.points.append(0)
         self.points.append(y + .0)
         self.points.append(0)
         self.point_types.append(type)
+        self.big_point_array = np.concatenate((self.big_point_array, [[[[x, y], [0, 0]]]]), axis=1)
+        self.big_point_array_movable = np.concatenate((self.big_point_array_movable, [type == POINT_dynamic]))
 
-    def create_DE(self):
-        # add empty list of equations
-        self.equations = []
-        for i in range(len(self.points)):
-            self.equations.append([])
+    def createPointArray(self):
+        self.N = len(self.point_definitions)
+        times = np.arange(0, self.end_time, self.h)
+        self.times = times
 
-        # iterate over all elements and add the element to the equation for the point it is attached to
-        for i, element in enumerate(self.elements):
-            # both points
-            for j, target in zip([1, -1], element.targets()):
-                # only if it is a valid point
-                if target < len(self.equations):
-                    self.equations[target].append([i, j])
+        self.big_point_array = np.zeros([len(times), self.N, 2, 2])
+        self.big_point_array_movable = np.zeros([self.N], dtype=np.bool)
+        for index, point in enumerate(self.point_definitions):
+            self.big_point_array[0, index, 0, :] = point[1:3]
+            self.big_point_array_movable[index] = point[0]
 
-    def Eval_Elem(self, X, Y, index, direction, fGetY):
-        return self.elements[index].eval_raw(X, Y, direction, fGetY)
+        # fixed points stay the same at all times
+        self.big_point_array[:, ~self.big_point_array_movable, 0, :] = self.big_point_array[0, ~self.big_point_array_movable, 0, :]
 
-    def F(self, X, Y):
-        # newtonian equations of motion
-        Z = np.zeros(len(Y))
+        def o(a):
+            return repr(a).replace("\n", "").replace("  ", " ").replace("  ", " ")
 
-        for j in range(len(Y) // 2):
-            if self.point_types[j // 2] == POINT_static:
-                continue
-            # x. = v
-            Z[j * 2 + 0] = Y[j * 2 + 1]
-            # iterate over all attached elements
-            for el in self.equations[j // 2]:
-                # v. = f/m
-                Z[j * 2 + 1] += self.Eval_Elem(X, Y, el[0], el[1], j % 2) / self.m - Y[j * 2 +1]*self.gamma
+        force = np.zeros([self.N, 2])
+        diff = np.zeros([self.N, 2, 2])
+        p = self.big_point_array[0].copy()
+        for i, t in enumerate(times[1:]):
+            #p[self.big_point_array_movable, 0] = p[self.big_point_array_movable, 0] + p[self.big_point_array_movable, 1] * self.h
+            p[:, 0, :] += p[:, 1, :] * self.h
+            for j in range(10000):
+                p[:, 1, :] = (p[:, 0, :] - self.big_point_array[i, :, 0]) / self.h
+                force[:] = 0
+                diff[:] = 0
+                for element in self.elements:
+                    targets = element.target_ids
+                    force[targets] += element.eval(t, p[targets])
+                    diff[targets] += element.derivative(t, p[targets])
 
-        return Z
-
-    def F2(self, X, Y):
-        # reduced equations of motion without inertia effects
-        # x. = F/gamma
-        # v(t+1) = F/gamma
-        Z = np.zeros(len(Y))
-
-        for j in range(0, len(Y) // 2):
-            if self.point_types[j // 2] == POINT_static:
-                continue
-            for el in self.equations[j // 2]:
-                # v. = F/gamma
-                Z[j * 2 + 1] += self.Eval_Elem(X, Y, el[0], el[1], j % 2) / self.gamma
-            # x. = v.
-            Z[j * 2 + 0] = Z[j * 2 + 1]
-            # v. = F/gamma - v
-            Z[j * 2 + 1] -= Y[j * 2 + 1]/self.h
-
-        return Z
-
-    def F3(self, X, Y):
-        # reduced equations of motion without inertia effects
-        # x. = F/gamma
-        # v(t+1) = F/gamma
-        Z = np.zeros(len(Y))
-
-        for j in range(0, len(Y) // 2):
-            if self.point_types[j // 2] == POINT_static:
-                continue
-            for el in self.equations[j // 2]:
-                # v. = F/gamma
-                Z[j * 2 + 1] += self.Eval_Elem(X, Y, el[0], el[1], j % 2) / self.gamma
-            # x. = v.
-            Z[j * 2 + 0] = Z[j * 2 + 1]
-            # v. = - v
-            Z[j * 2 + 1] -= Y[j * 2 + 1]/self.h
-
-        return Z
-
-    def RungeKutta(self):
-        X = 0
-        Y = self.points
-        while X < self.end_time:
-            K1 = self.F(X, Y) * self.h  # with array result
-            K2 = self.F(X + self.h / 2, Y + K1 / 2) * self.h
-            K3 = self.F(X + self.h / 2, Y + K2 / 2) * self.h
-            K4 = self.F(X + self.h, Y + K3) * self.h
-            Y = Y + (K1 + 2 * K2 + 2 * K3 + K4) / 6
-            X += self.h
-            self.all_points.append(Y)
+                T = np.linalg.norm(force, axis=1)
+                #print(i, j, T)
+                np.set_printoptions(suppress=True)
+                if np.all(T[self.big_point_array_movable] < 0.01):
+                    print(i, j, T)
+                    break
+                #if 1:#i == 30:
+                #    print(i, force.shape, T.shape, diff.shape)
+                #print(i, j, "diff", repr(diff).replace("\n", ""))
+                #print(i, j, "force", repr(force).replace("\n", ""))
+                diff = diff * force[:, None, :] / T[:, None, None]
+                #print(i, j, "diff", repr(diff).replace("\n", ""))
+                diff[np.isnan(diff)] = 0
+                #if 1:#i == 30:
+                #    print(i, j, "p", p[self.big_point_array_movable, 0], "v", p[self.big_point_array_movable, 1], "f", force[self.big_point_array_movable], "T", T[self.big_point_array_movable], "diff", diff[self.big_point_array_movable, 0])
+                p[self.big_point_array_movable, 0] -= (diff[self.big_point_array_movable, 0] + diff[self.big_point_array_movable, 1]*self.h)*0.001
+                #print(j, "p", p[self.big_point_array_movable, 0])
+            self.big_point_array[i + 1, self.big_point_array_movable, :, :] = p[self.big_point_array_movable]
+            #break
+            #self.big_point_array[i+1, self.big_point_array_movable, 1, :] = p[self.big_point_array_movable, 1, :] + force[self.big_point_array_movable] * self.h
+            #self.big_point_array[i+1, self.big_point_array_movable, 0, :] = p[self.big_point_array_movable, 0, :] + force[self.big_point_array_movable] * self.h
         return
-
-    def Euler(self):
         X2 = 0
         Y = self.points
         while X2 < self.end_time:
-            Y = Y + self.F(X2, Y) * self.h
+            Y = Y + F2(X2, Y) * self.h
             X2 += self.h
-            self.all_points.append(Y)
-        return
-
-
-    def Overdamed(self):
-        X2 = 0
-        Y = self.points
-        while X2 < self.end_time:
-            Y = Y + self.F2(X2, Y) * self.h
-            X2 += self.h
-            self.all_points.append(Y)
-        return
-
-    def Overkutta(self):
-        X = 0
-        Y = self.points
-        while X < self.end_time:
-            K1 = self.F2(X, Y) * self.h  # with array result
-            K2 = self.F2(X + self.h / 2, Y + K1 / 2) * self.h
-            K3 = self.F2(X + self.h / 2, Y + K2 / 2) * self.h
-            K4 = self.F2(X + self.h, Y + K3) * self.h
-            Y = Y + (K1 + 2 * K2 + 2 * K3 + K4) / 6
-            X += self.h
             self.all_points.append(Y)
         return
 
     def plot_points(self, index, subplot):
-        # convert points from the time "index" to numpy array (discarding every secend element because it is a velocity)
-        points = np.array(self.all_points[index])[::2]
-        points = points.reshape(len(self.all_points[index])//4, 2)
-        types = np.array(self.point_types)
+        if self.big_point_array is None:
+            return
+        points = self.big_point_array[index, :, 0]
+        types = self.big_point_array_movable
         # plot the different types in different colors
         subplot.plot(points[types == POINT_dynamic, 0], points[types == POINT_dynamic, 1], "bo")
         subplot.plot(points[types == POINT_static, 0], points[types == POINT_static, 1], "ro")
         for i in range(len(self.point_types)):
-            x, y = self.get_point(index, i)
+            x, y = self.big_point_array[index, i, 0]#self.get_point(index, i)
             subplot.text(x, y, i)
+        subplot.set_aspect("equal", adjustable="datalim")
 
     def get_point(self, index, i):
         return np.array([self.all_points[index][i * 4 + 0], self.all_points[index][i * 4 + 2]])
 
     def plot_elements(self, index, subplot):
+        if self.big_point_array is None:
+            return
         # iterate over all elements
         for element in self.elements:
-            # ignore those with invalid targets
-            if element.start >= len(self.all_points[index]) / 4 or element.end >= len(self.all_points[index]) / 4:
-                continue
             # draw the element
-            element.draw(subplot, self.get_point(index, element.start), self.get_point(index, element.end))
+            element.draw(subplot, self.big_point_array[index, element.target_ids])
 
     def plotCurve(self, index, coord, subplot, time, typ):
-        x = []
-        z = []
-        time_value = 0
-        i = 0
-        # print all_points
-        for Y in self.all_points:
-            if i * self.h <= time:
-                time_value = Y[index * 4 + coord]
-            x.append(i * self.h)
-            z.append(Y[index * 4 + coord])
-            i += 1
-        if typ == "normal":
-            subplot.plot(x, z, '-')
-            subplot.plot(time, time_value, 'bo')
-        if typ == "loglog":
-            subplot.loglog(x, z, '-')
-            subplot.loglog(time, time_value, 'bo')
+        points = self.big_point_array[:, index, 0, coord]
+        subplot.plot(self.times, points, "-")
+        subplot.plot(self.times[time], points[time], 'bo')
+        subplot.set_xlim(self.times[0], self.times[-1])
 
-    def plotHoldCurve(self, curve, subplot, typ):
-        if typ == "normal":
-            subplot.plot(curve[0], curve[1], '-')
-        if typ == "loglog":
-            subplot.loglog(curve[0], curve[1], '-')
+    def serializePoints(self):
+        text = ""
+        for point in self.point_definitions:
+            text += f'{"POINT_dynamic" if point[0] == POINT_dynamic else "POINT_static"} {point[1]} {point[2]}\n'
+        return text
 
-    def getCurve(self, index, coord):
-        x = []
-        z = []
-        i = 0
-        # print all_points
-        for Y in self.all_points:
-            x.append(i * self.h)
-            z.append(Y[index * 4 + coord])
-            i += 1
-        return [x, z]
+    def serializeElements(self):
+        text = ""
+        for element in self.elements:
+            print(element, str(element))
+            text += str(element)+"\n"
+        return text
+
+if __name__ == "__main__":
+    mysim = MySim()
+    self = mysim
+    spring = self.elements[0]
+    targets = spring.target_ids
+    p = self.big_point_array[0, targets]
