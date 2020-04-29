@@ -14,12 +14,28 @@ class Element:
 
     num_targets = 2
 
-    def __init__(self, start, end=0, **kwargs):
+    def __init__(self, start=0, end=0, **kwargs):
         self.target_ids = [start, end]
         self.start = start
         self.end = end
         for key in kwargs:
             setattr(self, key, kwargs[key])
+
+    @property
+    def start(self):
+        return self.target_ids[0]
+
+    @start.setter
+    def start(self, value):
+        self.target_ids[0] = value
+
+    @property
+    def end(self):
+        return self.target_ids[1]
+
+    @start.setter
+    def end(self, value):
+        self.target_ids[1] = value
 
     def draw(self, subplot, points):
         pass
@@ -99,7 +115,7 @@ class Spring(Element):
         return [[[-x, -y], [0, 0]], [[-x, -y], [0, 0]]]
 
     def __str__(self):
-        return "%d-%d Spring %f" % (self.start, self.end, self.rest)
+        return "%d-%d Spring %f %f" % (self.start, self.end, self.rest, self.strength)
 
 class Dashpot(Element):
     strength = 1
@@ -164,7 +180,7 @@ class Dashpot(Element):
         return np.array([[[0, 0], [-x, -y]], [[0, 0], [-x, -y]]])
 
     def __str__(self):
-        return "%d-%d Viscous" % (self.start, self.end)
+        return "%d-%d Viscous (eta %f)" % (self.start, self.end, self.strength)
 
 class Force(Element):
     t_start = 0
@@ -210,7 +226,7 @@ class Force(Element):
         return [[0, 0], [0, 0]]
 
     def __str__(self):
-        return "%d Force" % (self.start)
+        return "%d Force (%f, %f)" % (self.start, self.strength_x, self.strength_y)
 
     def targets(self):
         return [self.start]

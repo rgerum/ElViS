@@ -1,4 +1,5 @@
 import sys
+import numpy as np
 from qtpy import QtCore, QtGui, QtWidgets
 import matplotlib.pyplot as plt
 from matplotlib.backends.qt_compat import QtCore, QtWidgets, is_pyqt5
@@ -6,13 +7,15 @@ if is_pyqt5():
     from matplotlib.backends.backend_qt5agg import (
         FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
 else:
+
     from matplotlib.backends.backend_qt4agg import (
         FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
 from matplotlib.figure import Figure
 
 
 import springModule
-from QtShortCuts import QInputNumber
+from elements import Spring, Dashpot, Force
+from QtShortCuts import QInputNumber, QInputChoice
 
 
 """ some magic to prevent PyQt5 from swallowing exceptions """
@@ -21,6 +24,131 @@ sys._excepthook = sys.excepthook
 # Set the exception hook to our wrapping function
 sys.excepthook = lambda *args: sys._excepthook(*args)
 
+class MyList(QtWidgets.QListWidget):
+    def __init__(self, layout):
+        super().__init__()
+        layout.addWidget(self)
+
+    def setData(self, items):
+        if len(items) < self.count():
+            update = items
+            remove = np.arange(len(items), self.count())[::-1]
+            add = []
+        else:
+            update = items[:self.count()]
+            add = items[self.count():]
+            remove = []
+
+        for i in remove:
+            for name in dir(self):
+                print(name)
+            self.takeItem(i)
+
+        for i, v in enumerate(update):
+            self.item(i).setText(v)
+
+        for v in add:
+            self.addItem(v)
+
+class Properites(QtWidgets.QWidget):
+    def __init__(self, layout, parent):
+        super().__init__()
+        self.parent = parent
+        layout.addWidget(self)
+        QtWidgets.QVBoxLayout(self)
+
+    def initSignals(self):
+        for key, value in self.properties.items():
+            value.valueChanged.connect(lambda x, key=key: self.change_value(x, key))
+
+    def setTarget(self, element):
+        self.element = element
+        for key, value in self.properties.items():
+            value.setValue(getattr(element, key))
+
+    def change_value(self, value, key):
+        setattr(self.element, key, value)
+        self.parent.updateList()
+
+
+class PropertiesSpring(Properites):
+    def __init__(self, layout, parent):
+        super().__init__(layout, parent)
+        self.properties = {
+            "start": QInputChoice(self.layout(), "node 1", 0, [0], ["0"]),
+            "end": QInputChoice(self.layout(), "node 2", 0, [0], ["0"]),
+            "strength": QInputNumber(self.layout(), "k"),
+            "rest": QInputNumber(self.layout(), "rest"),
+        }
+        self.initSignals()
+
+class PropertiesDashpot(Properites):
+    def __init__(self, layout, parent):
+        super().__init__(layout, parent)
+        self.properties = {
+            "start": QInputChoice(self.layout(), "node 1", 0, [0], ["0"]),
+            "end": QInputChoice(self.layout(), "node 2", 0, [0], ["0"]),
+            "strength": QInputNumber(self.layout(), "eta"),
+        }
+        self.initSignals()
+
+
+class PropertiesForce(Properites):
+    def __init__(self, layout, parent):
+        super().__init__(layout, parent)
+        self.properties = {
+            "start": QInputChoice(self.layout(), "node 1", 0, [0], ["0"]),
+            "strength_x": QInputNumber(self.layout(), "strength_x"),
+            "strength_y": QInputNumber(self.layout(), "strength_y"),
+        }
+        self.initSignals()
+
+
+class ListPoints(QtWidgets.QWidget):
+    def __init__(self, parent, mysim):
+        super().__init__()
+        parent.addWidget(self)
+        self.mysim = mysim
+        layout = QtWidgets.QVBoxLayout(self)
+        self.list = MyList(layout)
+        self.updateList()
+        self.list.currentItemChanged.connect(self.selected)
+        self.input_properties = {}
+        for name, widget in [["Spring", PropertiesSpring], ["Dashpot", PropertiesDashpot], ["Force", PropertiesForce]]:
+            self.input_properties[name] = widget(layout, self)
+            self.input_properties[name].setVisible(False)
+
+        self.input_remove = QtWidgets.QPushButton("remove")
+        self.input_remove.clicked.connect(self.remove)
+        layout.addWidget(self.input_remove)
+        layout = QtWidgets.QHBoxLayout()
+        self.layout().addLayout(layout)
+        self.input_type = QInputChoice(layout, "Type", Spring, [Spring, Dashpot, Force], ["Spring", "Dashpot", "Force"])
+        self.input_add = QtWidgets.QPushButton("add")
+        self.input_add.clicked.connect(self.add)
+        layout.addWidget(self.input_add)
+
+    def remove(self):
+        self.mysim.elements.pop(self.list.currentRow())
+        self.updateList()
+
+    def add(self):
+        self.mysim.elements.append(self.input_type.value()())
+        self.updateList()
+
+    def selected(self, item):
+        element = self.mysim.elements[self.list.currentRow()]
+        for key, value in self.input_properties.items():
+            value.setVisible(False)
+        input = self.input_properties[type(element).__name__]
+        input.properties["start"].setChoices(np.arange(self.mysim.big_point_array_movable.shape[0]))
+        if "end" in input.properties:
+            input.properties["end"].setChoices(np.arange(self.mysim.big_point_array_movable.shape[0]))
+        input.setVisible(True)
+        input.setTarget(element)
+
+    def updateList(self):
+        self.list.setData([str(e) for e in self.mysim.elements])
 
 class Window(QtWidgets.QWidget):
     time = 0
@@ -55,17 +183,16 @@ class Window(QtWidgets.QWidget):
         self.points_input = QtWidgets.QPlainTextEdit()
         right_pane.addWidget(self.points_input)
 
-        self.elements_input = QtWidgets.QPlainTextEdit()
-        right_pane.addWidget(self.elements_input)
-
         self.mysim = springModule.MySim()
 
+        self.list = ListPoints(right_pane, self.mysim)
+
         self.points_input.setPlainText(str(self.mysim.serializePoints()))
-        self.elements_input.setPlainText(str(self.mysim.serializeElements()))
 
         self.drawPoints()
 
         self.buttonRunClick()
+        self.timeChanged()
 
     def timeChange(self, event):
         #if (len(self.mysim.all_points) <= 1):
@@ -84,11 +211,11 @@ class Window(QtWidgets.QWidget):
         if len(self.mysim.all_points) <= 1:
             self.mysim.all_points = [self.mysim.points]
         self.subplot_draw.cla()
+        self.subplot_draw.set_xlim([-3, 3])
+        self.subplot_draw.set_ylim([-2, 2])
+        self.subplot_draw.grid(True)
         self.mysim.plot_elements(i, self.subplot_draw)
         self.mysim.plot_points(i, self.subplot_draw)
-        self.subplot_draw.set_xlim([-1, 6])
-        self.subplot_draw.set_ylim([-3, 3])
-        self.subplot_draw.grid(True)
         self.canvas.figure.canvas.draw()
 
     def drawCurve(self, event=0):

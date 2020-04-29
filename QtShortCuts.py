@@ -229,6 +229,28 @@ class QInputChoice(QInput):
         if value is not None:
             self.setValue(value)
 
+    def setChoices(self, items):
+        if len(items) < self.combobox.count():
+                update = items
+                remove = np.arange(len(items), self.combobox.count)[::-1]
+                add = []
+
+        else:
+            update = items[:self.combobox.count()]
+            add = items[self.combobox.count():]
+            remove = []
+
+        for i in remove:
+            self.combobox.removeItem(i)
+
+        for i, v in enumerate(update):
+            self.combobox.setItemData(i, str(v))
+
+        for v in add:
+            self.combobox.addItem(str(v))
+        self.values = list(items)
+
+
     def _doSetValue(self, value):
         if self.reference_by_index is True:
             self.combobox.setCurrentIndex(value)

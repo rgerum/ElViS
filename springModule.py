@@ -41,8 +41,8 @@ class MySim:
 
             # add initial elements
             self.add_element(Spring(0, 1, rest=1, strength=1, drawoffset=0.25))
-            self.add_element(Dashpot(0, 1, strength=1, drawoffset=-0.25))
-            self.add_element(Force(1, strength_x=1, t_start=1, t_end=3))
+            #self.add_element(Dashpot(0, 1, strength=1, drawoffset=-0.25))
+            self.add_element(Force(1, strength_x=1, t_start=0, t_end=3))
 
         # set the end time and the time step
         self.end_time = 10
@@ -96,11 +96,52 @@ class MySim:
         # fixed points stay the same at all times
         self.big_point_array[:, ~self.big_point_array_movable, 0, :] = self.big_point_array[0, ~self.big_point_array_movable, 0, :]
 
+
+        def getCost(par):
+            force = np.zeros([self.N, 2])
+            diff = np.zeros([self.N, 2, 2])
+
+            p[self.big_point_array_movable, 0] = par
+            p[:, 1, :] = (p[:, 0, :] - self.big_point_array[i, :, 0]) / self.h
+            force[:] = 0
+            diff[:] = 0
+            for element in self.elements:
+                targets = element.target_ids
+                force[targets] += element.eval(t, p[targets])
+                diff[targets] += element.derivative(t, p[targets])
+
+            T = np.linalg.norm(force, axis=1)
+
+            #if np.all(T[self.big_point_array_movable] < 0.01):
+            #    np.set_printoptions(suppress=True)
+            #    print(i, j, T)
+            #    break
+
+            diff = diff * force[:, None, :] / T[:, None, None]
+            diff[np.isnan(diff)] = 0
+            diff[self.big_point_array_movable, 0] += diff[self.big_point_array_movable, 1] * self.h
+
+            return np.sum(T[self.big_point_array_movable]), diff[self.big_point_array_movable, 0].ravel()
+
+        def minim(getCost, par, **kwargs):
+            for j in range(10000):
+                cost, diff = getCost(par)
+
+                if cost < 0.01:
+                    np.set_printoptions(suppress=True)
+                    print(i, j, cost)
+                    break
+
+                par -= diff * 0.001
+            return {"x": par}
+
         force = np.zeros([self.N, 2])
         diff = np.zeros([self.N, 2, 2])
         p = self.big_point_array[0].copy()
         for i, t in enumerate(times[1:]):
             p[:, 0, :] += p[:, 1, :] * self.h
+
+            """
             for j in range(10000):
                 p[:, 1, :] = (p[:, 0, :] - self.big_point_array[i, :, 0]) / self.h
                 force[:] = 0
@@ -120,8 +161,16 @@ class MySim:
                 diff = diff * force[:, None, :] / T[:, None, None]
                 diff[np.isnan(diff)] = 0
                 p[self.big_point_array_movable, 0] -= (diff[self.big_point_array_movable, 0] + diff[self.big_point_array_movable, 1]*self.h)*0.001
-
+            """
+            from scipy.optimize import minimize
+            res = minim(getCost, p[self.big_point_array_movable, 0].ravel(), jac=True)
+            #res = minimize(getCost, p[self.big_point_array_movable, 0].ravel(), jac=True)
+            print(i, res)
+            p[self.big_point_array_movable, 0] = res["x"]
+            p[:, 1, :] = (p[:, 0, :] - self.big_point_array[i, :, 0]) / self.h
             self.big_point_array[i + 1, self.big_point_array_movable, :, :] = p[self.big_point_array_movable]
+            #if i == 10:
+            #    break
 
     def plot_points(self, index, subplot):
         if self.big_point_array is None:
