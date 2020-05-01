@@ -24,7 +24,7 @@ class MySim:
         self.all_points = []
         self.elements = []
 
-        if 0: # Maxwell
+        if 1: # Maxwell
             # add initial points
             self.add_point(POINT_static, 0, 0)
             self.add_point(POINT_dynamic, 2, 0)
@@ -32,17 +32,27 @@ class MySim:
 
             # add initial elements
             self.add_element(Dashpot(0, 2, strength=1))
-            self.add_element(Spring(1, 2, rest=1, strength=1))
+            self.add_element(Spring(1, 2, rest=-1, strength=1))
             self.add_element(Force(1, strength_x=1, t_start=1, t_end=3))
+        elif 0:
+            # add initial points
+            self.add_point(POINT_static, 0, 0)
+            self.add_point(POINT_dynamic, 1, 0)
+            self.add_point(POINT_dynamic, 2, 0)
+
+            # add initial elements
+            self.add_element(Dashpot(0, 1, strength=1))
+            self.add_element(Spring(1, 2, rest=1, strength=1))
+            self.add_element(Force(2, strength_x=1, t_start=1, t_end=3))
         else:  # Kelvin Voigt
             # add initial points
             self.add_point(POINT_static, 0, 0)
             self.add_point(POINT_dynamic, 1, 0)
 
             # add initial elements
-            self.add_element(Spring(0, 1, rest=1, strength=1, drawoffset=0.25))
-            #self.add_element(Dashpot(0, 1, strength=1, drawoffset=-0.25))
-            self.add_element(Force(1, strength_x=1, t_start=0, t_end=3))
+            self.add_element(Spring(1, 0, rest=-1, strength=1, drawoffset=0.25))
+            self.add_element(Dashpot(1, 0, strength=1, drawoffset=-0.25))
+            self.add_element(Force(1, strength_x=1, t_start=1, t_end=3))
 
         # set the end time and the time step
         self.end_time = 10
@@ -171,6 +181,76 @@ class MySim:
             self.big_point_array[i + 1, self.big_point_array_movable, :, :] = p[self.big_point_array_movable]
             #if i == 10:
             #    break
+
+    def simulateOverdamped(self):
+        self.N = len(self.big_point_array_movable)
+        times = np.arange(0, self.end_time, self.h)
+        self.times = times
+
+        p = self.big_point_array[0].copy()
+        self.big_point_array = np.zeros([len(times), self.N, 2, 2])
+        self.big_point_array[0] = p.copy()
+
+        # fixed points stay the same at all times
+        self.big_point_array[:, ~self.big_point_array_movable, 0, :] = self.big_point_array[0, ~self.big_point_array_movable, 0, :]
+
+        def format(targets):
+            x = np.concatenate(([targets], [targets]))
+            return x.T.ravel(), x.ravel()
+
+        force = np.zeros([self.N, 2])
+        diff = np.zeros([self.N, 2, 2])
+        p = self.big_point_array[0].copy()
+        for i, t in enumerate(times[1:]):
+            p[:, 0, :] += p[:, 1, :] * self.h
+            F_all = np.zeros(self.N)
+            Fx_all = np.zeros([self.N, self.N])
+            Fy_all = np.zeros([self.N, self.N])
+
+            for element in self.elements:
+                targets = element.target_ids
+                F, Fx, Fy = element.eval1d(t, p[targets])
+                F_all[targets] += F
+                Fx_all[format(targets)] += np.asarray(Fx).ravel()
+                Fy_all[format(targets)] += np.asarray(Fy).ravel()
+                #diff[targets] += element.derivative(t, p[targets])
+
+            damped = ~np.all(Fy_all == 0, axis=1)
+
+            print(F_all)
+            print(Fx_all)
+            print(Fy_all)
+            print("damped0", np.all(Fy_all == 0, axis=0))
+            print("damped1", np.all(Fy_all == 0, axis=1))
+            Fy_all[:, ~self.big_point_array_movable] = 0
+            Fy_all[~self.big_point_array_movable, ~self.big_point_array_movable] = 1
+            print(damped)
+            print(Fy_all)
+            print(Fy_all.shape, Fy_all.dtype)
+            print("-(F_all + Fx_all @ p[:, 0, 0])", -(F_all + Fx_all @ p[:, 0, 0]))
+            print("inv")
+            print(F_all[damped])
+            print(Fx_all[damped, :])
+            print(Fy_all[damped][:, damped])
+            print("-------------")
+
+            Fx_all2 = Fx_all.copy()
+            Fx_all2[:, ~self.big_point_array_movable] = 0
+            Fx_all2[~self.big_point_array_movable, ~self.big_point_array_movable] = 1
+            x = - np.linalg.inv(Fx_all2[~damped][:, ~damped]) @ (F_all[~damped] + Fx_all2[~damped][:, damped] @ p[damped, 0, 0])
+            p[self.big_point_array_movable&~damped, 0, 0] = x[self.big_point_array_movable[~damped]]
+
+            v = - np.linalg.inv(Fy_all[damped][:, damped]) @ (F_all[damped] + Fx_all[damped, :] @ p[:, 0, 0])
+            p[self.big_point_array_movable&damped, 1, 0] = v[self.big_point_array_movable[damped]]
+
+            print(F_all[~damped])
+            print(Fx_all[~damped][:, ~damped])
+            print(Fx_all[~damped][:, damped])
+            print("-------------")
+            print("p", p[:, 0, 0])
+            print("v", p[:, 1, 0])
+            self.big_point_array[i + 1, self.big_point_array_movable, :, 0] = p[self.big_point_array_movable, :, 0]
+            continue
 
     def plot_points(self, index, subplot):
         if self.big_point_array is None:

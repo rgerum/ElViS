@@ -76,7 +76,7 @@ class Spring(Element):
         pos = np.vstack((pos, start + norm * self.drawoffset))
 
         # the count of the coil
-        count = int(self.rest / 0.1)
+        count = int(np.abs(self.rest) / 0.1)
         # iterate over them
         for i in range(count):
             # and add a point
@@ -97,6 +97,12 @@ class Spring(Element):
         # the direction is the normalized difference vector multiplied by the "direction" (-1 or 1, depending which point is start or end)
         vector = diff / length * factor
         return np.array([vector, -vector])
+
+    def eval1d(self, t, points):
+        F = [-self.rest*self.strength, self.rest*self.strength]
+        Fx = [[-self.strength, self.strength], [self.strength, -self.strength]]
+        Fy = [[0, 0], [0, 0]]
+        return F, Fx, Fy
 
     def derivative(self, t, points):
         # the difference between the two anchor points
@@ -168,6 +174,12 @@ class Dashpot(Element):
         vector = diff_normed * factor
         return [vector, -vector]
 
+    def eval1d(self, t, points):
+        F = [0, 0]
+        Fx = [[0, 0], [0, 0]]
+        Fy = [[-self.strength, self.strength], [self.strength, -self.strength]]
+        return F, Fx, Fy
+
     def derivative(self, t, points):
         # the difference between the two anchor points
         diff = points[1, 0] - points[0, 0]
@@ -221,6 +233,15 @@ class Force(Element):
             factor = np.min([factor1, 1, factor2])
             return np.array([[self.strength_x * factor, self.strength_y * factor]])
         return [[0, 0]]
+
+    def eval1d(self, t, points):
+        if self.t_start <= t < self.t_end:
+            F = [self.strength_x]
+        else:
+            F = [0]
+        Fx = [[0]]
+        Fy = [[0]]
+        return F, Fx, Fy
 
     def derivative(self, t, points):
         return [[0, 0], [0, 0]]
