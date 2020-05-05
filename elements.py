@@ -33,7 +33,7 @@ class Element:
     def end(self):
         return self.target_ids[1]
 
-    @start.setter
+    @end.setter
     def end(self, value):
         self.target_ids[1] = value
 
