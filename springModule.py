@@ -182,9 +182,11 @@ class MySim:
             #if i == 10:
             #    break
 
-    def simulateOverdamped(self):
+    def simulateOverdamped(self, progressCallback=None):
         self.N = len(self.big_point_array_movable)
         times = np.arange(0, self.end_time, self.h)
+        # double time values
+        times = np.concatenate(([times], [times])).T.ravel()[1:-1]
         self.times = times
 
         p = self.big_point_array[0].copy()
@@ -202,55 +204,43 @@ class MySim:
         diff = np.zeros([self.N, 2, 2])
         p = self.big_point_array[0].copy()
         for i, t in enumerate(times[1:]):
-            p[:, 0, :] += p[:, 1, :] * self.h
+            if i % 2 == 0:
+                p[:, 0, :] += p[:, 1, :] * self.h
             F_all = np.zeros(self.N)
             Fx_all = np.zeros([self.N, self.N])
             Fy_all = np.zeros([self.N, self.N])
 
             for element in self.elements:
                 targets = element.target_ids
-                F, Fx, Fy = element.eval1d(t, p[targets])
+                F, Fx, Fy = element.eval1d(t, p[targets], i % 2)
                 F_all[targets] += F
                 Fx_all[format(targets)] += np.asarray(Fx).ravel()
                 Fy_all[format(targets)] += np.asarray(Fy).ravel()
-                #diff[targets] += element.derivative(t, p[targets])
 
             damped = ~np.all(Fy_all == 0, axis=1)
+            unconnected = np.all(Fx_all == 0, axis=1) & ~damped
+            print(damped, unconnected)
+            fixed = ~self.big_point_array_movable | unconnected
+            free = ~fixed
+            print(fixed)
 
-            print(F_all)
-            print(Fx_all)
-            print(Fy_all)
-            print("damped0", np.all(Fy_all == 0, axis=0))
-            print("damped1", np.all(Fy_all == 0, axis=1))
-            Fy_all[:, ~self.big_point_array_movable] = 0
-            Fy_all[~self.big_point_array_movable, ~self.big_point_array_movable] = 1
-            print(damped)
-            print(Fy_all)
-            print(Fy_all.shape, Fy_all.dtype)
-            print("-(F_all + Fx_all @ p[:, 0, 0])", -(F_all + Fx_all @ p[:, 0, 0]))
-            print("inv")
-            print(F_all[damped])
-            print(Fx_all[damped, :])
-            print(Fy_all[damped][:, damped])
-            print("-------------")
+            Fy_all[:, fixed] = 0
+            Fy_all[fixed, fixed] = 1
 
             Fx_all2 = Fx_all.copy()
-            Fx_all2[:, ~self.big_point_array_movable] = 0
-            Fx_all2[~self.big_point_array_movable, ~self.big_point_array_movable] = 1
+            Fx_all2[:, fixed] = 0
+            Fx_all2[fixed, fixed] = 1
             x = - np.linalg.inv(Fx_all2[~damped][:, ~damped]) @ (F_all[~damped] + Fx_all2[~damped][:, damped] @ p[damped, 0, 0])
-            p[self.big_point_array_movable&~damped, 0, 0] = x[self.big_point_array_movable[~damped]]
+            p[free & ~damped, 0, 0] = x[free[~damped]]
 
             v = - np.linalg.inv(Fy_all[damped][:, damped]) @ (F_all[damped] + Fx_all[damped, :] @ p[:, 0, 0])
-            p[self.big_point_array_movable&damped, 1, 0] = v[self.big_point_array_movable[damped]]
+            p[free & damped, 1, 0] = v[free[damped]]
 
-            print(F_all[~damped])
-            print(Fx_all[~damped][:, ~damped])
-            print(Fx_all[~damped][:, damped])
-            print("-------------")
-            print("p", p[:, 0, 0])
-            print("v", p[:, 1, 0])
             self.big_point_array[i + 1, self.big_point_array_movable, :, 0] = p[self.big_point_array_movable, :, 0]
-            continue
+
+            if progressCallback is not None:
+                progressCallback(i, len(self.times))
+        progressCallback(len(self.times), len(self.times))
 
     def plot_points(self, index, subplot):
         if self.big_point_array is None:

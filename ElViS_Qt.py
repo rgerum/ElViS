@@ -173,6 +173,9 @@ class Window(QtWidgets.QWidget):
         self.time_slider.valueChanged.connect(self.timeChange)
         left_pane.addWidget(self.time_slider)
 
+        self.progress_bar = QtWidgets.QProgressBar()
+        left_pane.addWidget(self.progress_bar)
+
         self.button_start = QtWidgets.QPushButton("run")
         self.button_start.clicked.connect(self.buttonRunClick)
         right_pane.addWidget(self.button_start)
@@ -211,7 +214,7 @@ class Window(QtWidgets.QWidget):
         if len(self.mysim.all_points) <= 1:
             self.mysim.all_points = [self.mysim.points]
         self.subplot_draw.cla()
-        self.subplot_draw.set_xlim([-3, 3])
+        self.subplot_draw.set_xlim([-1, 3])
         self.subplot_draw.set_ylim([-2, 2])
         self.subplot_draw.grid(True)
         self.mysim.plot_elements(i, self.subplot_draw)
@@ -240,10 +243,14 @@ class Window(QtWidgets.QWidget):
         self.mysim.end_time = float(self.config_time.value())
         self.mysim.h = float(self.config_delta.value())
 
-        self.mysim.simulateOverdamped()
+        self.mysim.simulateOverdamped(self.progressCallback)
         self.time_slider.setRange(0, self.mysim.end_time/self.mysim.h-1)
         self.time_slider.resolution = self.mysim.h
         self.drawCurve()
+
+    def progressCallback(self, i, max):
+        self.progress_bar.setRange(0, max)
+        self.progress_bar.setValue(i)
 
 
 

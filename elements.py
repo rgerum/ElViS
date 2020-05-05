@@ -98,7 +98,7 @@ class Spring(Element):
         vector = diff / length * factor
         return np.array([vector, -vector])
 
-    def eval1d(self, t, points):
+    def eval1d(self, t, points, before):
         F = [-self.rest*self.strength, self.rest*self.strength]
         Fx = [[-self.strength, self.strength], [self.strength, -self.strength]]
         Fy = [[0, 0], [0, 0]]
@@ -174,7 +174,7 @@ class Dashpot(Element):
         vector = diff_normed * factor
         return [vector, -vector]
 
-    def eval1d(self, t, points):
+    def eval1d(self, t, points, before):
         F = [0, 0]
         Fx = [[0, 0], [0, 0]]
         Fy = [[-self.strength, self.strength], [self.strength, -self.strength]]
@@ -234,11 +234,17 @@ class Force(Element):
             return np.array([[self.strength_x * factor, self.strength_y * factor]])
         return [[0, 0]]
 
-    def eval1d(self, t, points):
-        if self.t_start <= t < self.t_end:
-            F = [self.strength_x]
+    def eval1d(self, t, points, after):
+        if not after:
+            if self.t_start < t <= self.t_end:
+                F = [self.strength_x]
+            else:
+                F = [0]
         else:
-            F = [0]
+            if self.t_start <= t < self.t_end:
+                F = [self.strength_x]
+            else:
+                F = [0]
         Fx = [[0]]
         Fy = [[0]]
         return F, Fx, Fy
