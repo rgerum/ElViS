@@ -24,7 +24,7 @@ class MySim:
         self.all_points = []
         self.elements = []
 
-        if 1: # Maxwell
+        if 0: # Maxwell
             # add initial points
             self.add_point(POINT_static, 0, 0)
             self.add_point(POINT_dynamic, 2, 0)
@@ -44,6 +44,13 @@ class MySim:
             self.add_element(Dashpot(0, 1, strength=1))
             self.add_element(Spring(1, 2, rest=1, strength=1))
             self.add_element(Force(2, strength_x=1, t_start=1, t_end=3))
+        elif 1:
+            self.add_point(POINT_static, 1, 0)
+            self.add_point(POINT_dynamic, 2, 0)
+
+            # add initial elements
+            self.add_element(Spring(1, 0, rest=-1, strength=1, drawoffset=0))
+            self.add_element(Force(1, strength_x=1, t_start=1, t_end=3))
         else:  # Kelvin Voigt
             # add initial points
             self.add_point(POINT_static, 0, 0)
@@ -244,18 +251,20 @@ class MySim:
 
             damped = ~np.all(Fy_all == 0, axis=1)
             unconnected = np.all(Fx_all == 0, axis=1) & ~damped
-            print(damped, unconnected)
             fixed = ~self.big_point_array_movable | unconnected
             free = ~fixed
-            print(fixed)
 
+            # F^y_ij = d_ij for i in {fixed nodes}
             Fy_all[:, fixed] = 0
             Fy_all[fixed, fixed] = 1
 
-            Fx_all2 = Fx_all.copy()
-            Fx_all2[:, fixed] = 0
-            Fx_all2[fixed, fixed] = 1
-            x = - np.linalg.inv(Fx_all2[~damped][:, ~damped]) @ (F_all[~damped] + Fx_all2[~damped][:, damped] @ p[damped, 0, 0])
+            A = Fx_all.copy()
+            #
+            A[:, fixed] = 0
+            A[fixed, fixed] = 1
+            B = Fx_all.copy()
+            B[:, ~fixed] = 0
+            x = - np.linalg.inv(A[~damped][:, ~damped]) @ (F_all[~damped] + B[~damped][:, ~damped] @ p[~damped, 0, 0] + Fx_all[~damped][:, damped] @ p[damped, 0, 0])
             p[free & ~damped, 0, 0] = x[free[~damped]]
 
             v = - np.linalg.inv(Fy_all[damped][:, damped]) @ (F_all[damped] + Fx_all[damped, :] @ p[:, 0, 0])
