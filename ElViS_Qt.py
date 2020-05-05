@@ -98,17 +98,73 @@ class PropertiesForce(Properites):
         super().__init__(layout, parent)
         self.properties = {
             "start": QInputChoice(self.layout(), "node 1", 0, [0], ["0"]),
-            "strength_x": QInputNumber(self.layout(), "strength_x"),
-            "strength_y": QInputNumber(self.layout(), "strength_y"),
+            "strength_x": QInputNumber(self.layout(), "strength"),
         }
         self.initSignals()
 
+class PropertiesPoint(Properites):
+    def __init__(self, layout, parent):
+        super().__init__(layout, parent)
+        self.properties = {
+            0: QInputChoice(self.layout(), "fixed", 0, [0, 1], ["fixed", "free"]),
+            1: QInputNumber(self.layout(), "x"),
+        }
+        self.initSignals()
+
+    def setTarget(self, element, index):
+        self.element = element
+        self.index = index
+        for key, value in self.properties.items():
+            value.setValue(self.element.get_point(index)[key])
+
+    def change_value(self, value, key):
+        data = self.element.get_point(self.index)
+        data[key] = value
+        self.element.set_point(self.index, data)
+        self.parent.updateList()
+
 
 class ListPoints(QtWidgets.QWidget):
-    def __init__(self, parent, mysim):
+    def __init__(self, parent, mysim, window: "Window"):
         super().__init__()
         parent.addWidget(self)
         self.mysim = mysim
+        self.window = window
+        layout = QtWidgets.QVBoxLayout(self)
+        self.list = MyList(layout)
+        self.updateList()
+        self.list.currentItemChanged.connect(self.selected)
+        self.input_properties = PropertiesPoint(layout, self)
+
+        self.input_remove = QtWidgets.QPushButton("remove")
+        self.input_remove.clicked.connect(self.remove)
+        layout.addWidget(self.input_remove)
+        self.input_add = QtWidgets.QPushButton("add")
+        self.input_add.clicked.connect(self.add)
+        layout.addWidget(self.input_add)
+
+    def remove(self):
+        self.mysim.del_point(self.list.currentRow())
+        self.updateList()
+
+    def add(self):
+        self.mysim.add_point(1, 0, 0)
+        self.updateList()
+
+    def selected(self, item):
+        self.input_properties.setTarget(self.mysim, self.list.currentRow())
+
+    def updateList(self):
+        self.list.setData([str(e) for e in self.mysim.iter_points()])
+        self.window.drawPoints(0)
+
+
+class ListElements(QtWidgets.QWidget):
+    def __init__(self, parent, mysim, window: "Window"):
+        super().__init__()
+        parent.addWidget(self)
+        self.mysim = mysim
+        self.window = window
         layout = QtWidgets.QVBoxLayout(self)
         self.list = MyList(layout)
         self.updateList()
@@ -149,6 +205,7 @@ class ListPoints(QtWidgets.QWidget):
 
     def updateList(self):
         self.list.setData([str(e) for e in self.mysim.elements])
+        self.window.drawPoints(0)
 
 class Window(QtWidgets.QWidget):
     time = 0
@@ -183,14 +240,15 @@ class Window(QtWidgets.QWidget):
         self.config_time = QInputNumber(right_pane, "Time", value=10)
         self.config_delta = QInputNumber(right_pane, "Delta T", value=0.1)
 
-        self.points_input = QtWidgets.QPlainTextEdit()
-        right_pane.addWidget(self.points_input)
+        #self.points_input = QtWidgets.QPlainTextEdit()
+        #right_pane.addWidget(self.points_input)
 
         self.mysim = springModule.MySim()
 
-        self.list = ListPoints(right_pane, self.mysim)
+        self.list1 = ListPoints(right_pane, self.mysim, self)
+        self.list = ListElements(right_pane, self.mysim, self)
 
-        self.points_input.setPlainText(str(self.mysim.serializePoints()))
+        #self.points_input.setPlainText(str(self.mysim.serializePoints()))
 
         self.drawPoints()
 

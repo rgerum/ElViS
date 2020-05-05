@@ -90,9 +90,34 @@ class MySim:
         if self.big_point_array is None:
             self.big_point_array = np.zeros([1, 0, 2, 2])
             self.big_point_array_movable = np.zeros([0], dtype=np.bool)
+        if self.big_point_array.shape[0] != 1:
+            self.big_point_array = self.big_point_array[0:1]
         # add a point to the list of points
+        print(self.big_point_array.shape, np.array([[[[x, y], [0, 0]]]]).shape)
         self.big_point_array = np.concatenate((self.big_point_array, [[[[x, y], [0, 0]]]]), axis=1)
         self.big_point_array_movable = np.concatenate((self.big_point_array_movable, [type == POINT_dynamic]))
+
+    def del_point(self, index):
+        for element in self.elements:
+            for i in range(len(element.target_ids)):
+                if element.target_ids[i] > index:
+                    element.target_ids[i] -= 1
+        self.big_point_array = np.delete(self.big_point_array, index, axis=1)
+        self.big_point_array_movable = np.delete(self.big_point_array_movable, index)
+
+    def get_point(self, index):
+        return [self.big_point_array_movable[index], self.big_point_array[0, index, 0, 0], self.big_point_array[0, index, 0, 1]]
+
+    def set_point(self, index, data):
+        self.big_point_array_movable[index] = data[0]
+        self.big_point_array[0, index, 0, 0] = data[1]
+
+    def get_point_count(self):
+        return self.big_point_array.shape[1]
+
+    def iter_points(self):
+        for i in range(self.get_point_count()):
+            yield self.get_point(i)
 
     def simulateOverdamped(self):
         self.N = len(self.big_point_array_movable)
@@ -261,7 +286,10 @@ class MySim:
         # iterate over all elements
         for element in self.elements:
             # draw the element
-            element.draw(subplot, self.big_point_array[index, element.target_ids])
+            try:
+                element.draw(subplot, self.big_point_array[index, element.target_ids])
+            except IndexError:
+                pass
 
     def plotCurve(self, index, coord, subplot, time, typ):
         points = self.big_point_array[:, index, 0, coord]

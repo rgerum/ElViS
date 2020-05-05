@@ -232,7 +232,7 @@ class QInputChoice(QInput):
     def setChoices(self, items):
         if len(items) < self.combobox.count():
                 update = items
-                remove = np.arange(len(items), self.combobox.count)[::-1]
+                remove = np.arange(len(items), self.combobox.count())[::-1]
                 add = []
 
         else:
@@ -258,7 +258,10 @@ class QInputChoice(QInput):
             try:
                 self.combobox.setCurrentIndex(self.values.index(value))
             except ValueError:
-                self.combobox.setCurrentIndex(self.value_names.index(value))
+                try:
+                    self.combobox.setCurrentIndex(self.value_names.index(value))
+                except ValueError:
+                    return
 
     def value(self):
         if self.reference_by_index is True:
