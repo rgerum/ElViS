@@ -24,7 +24,7 @@ class MySim:
         self.all_points = []
         self.elements = []
 
-        if 0: # Maxwell
+        if 1: # Maxwell
             # add initial points
             self.add_point(POINT_static, 0, 0)
             self.add_point(POINT_dynamic, 2, 0)
