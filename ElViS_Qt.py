@@ -99,6 +99,8 @@ class PropertiesForce(Properites):
         self.properties = {
             "start": QInputChoice(self.layout(), "node 1", 0, [0], ["0"]),
             "strength_x": QInputNumber(self.layout(), "strength"),
+            "t_start": QInputNumber(self.layout(), "time start"),
+            "t_end": QInputNumber(self.layout(), "time end"),
         }
         self.initSignals()
 

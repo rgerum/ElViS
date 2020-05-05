@@ -253,7 +253,7 @@ class Force(Element):
         return [[0, 0], [0, 0]]
 
     def __str__(self):
-        return "%d Force (%f, %f)" % (self.start, self.strength_x, self.strength_y)
+        return "%d Force (%f, %f-%f)" % (self.start, self.strength_x, self.t_start, self.t_end)
 
     def targets(self):
         return [self.start]
