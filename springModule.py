@@ -130,7 +130,6 @@ class MySim:
         if self.big_point_array.shape[0] != 1:
             self.big_point_array = self.big_point_array[0:1]
         # add a point to the list of points
-        print(self.big_point_array.shape, np.array([[[[x, y], [0, 0]]]]).shape)
         self.big_point_array = np.concatenate((self.big_point_array, [[[[x, y], [0, 0]]]]), axis=1)
         self.big_point_array_movable = np.concatenate((self.big_point_array_movable, [type == POINT_dynamic]))
 
