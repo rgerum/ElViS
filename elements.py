@@ -70,6 +70,9 @@ class Spring(Element):
         start, end = points[:, 0]
         # difference vector
         dist = end-start
+        # ignore 0 elements
+        if np.linalg.norm(dist) == 0:
+            return
         # normalized normal vector
         norm = np.array([-dist[1], dist[0]]) / np.linalg.norm(dist)
 
@@ -143,6 +146,9 @@ class Dashpot(Element):
 
         # difference vector
         dist = end - start
+        # ignore 0 elements
+        if np.linalg.norm(dist) == 0:
+            return
         # normalized normal vector
         norm = np.array([-dist[1], dist[0]]) / np.linalg.norm(dist)
         # normalized tangential vector

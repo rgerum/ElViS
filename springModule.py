@@ -145,94 +145,6 @@ class MySim:
         for i in range(self.get_point_count()):
             yield self.get_point(i)
 
-    def simulateOverdamped(self):
-        self.N = len(self.big_point_array_movable)
-        times = np.arange(0, self.end_time, self.h)
-        self.times = times
-
-        p = self.big_point_array[0].copy()
-        self.big_point_array = np.zeros([len(times), self.N, 2, 2])
-        self.big_point_array[0] = p.copy()
-
-        # fixed points stay the same at all times
-        self.big_point_array[:, ~self.big_point_array_movable, 0, :] = self.big_point_array[0, ~self.big_point_array_movable, 0, :]
-
-
-        def getCost(par):
-            force = np.zeros([self.N, 2])
-            diff = np.zeros([self.N, 2, 2])
-
-            p[self.big_point_array_movable, 0] = par
-            p[:, 1, :] = (p[:, 0, :] - self.big_point_array[i, :, 0]) / self.h
-            force[:] = 0
-            diff[:] = 0
-            for element in self.elements:
-                targets = element.target_ids
-                force[targets] += element.eval(t, p[targets])
-                diff[targets] += element.derivative(t, p[targets])
-
-            T = np.linalg.norm(force, axis=1)
-
-            #if np.all(T[self.big_point_array_movable] < 0.01):
-            #    np.set_printoptions(suppress=True)
-            #    print(i, j, T)
-            #    break
-
-            diff = diff * force[:, None, :] / T[:, None, None]
-            diff[np.isnan(diff)] = 0
-            diff[self.big_point_array_movable, 0] += diff[self.big_point_array_movable, 1] * self.h
-
-            return np.sum(T[self.big_point_array_movable]), diff[self.big_point_array_movable, 0].ravel()
-
-        def minim(getCost, par, **kwargs):
-            for j in range(10000):
-                cost, diff = getCost(par)
-
-                if cost < 0.01:
-                    np.set_printoptions(suppress=True)
-                    print(i, j, cost)
-                    break
-
-                par -= diff * 0.001
-            return {"x": par}
-
-        force = np.zeros([self.N, 2])
-        diff = np.zeros([self.N, 2, 2])
-        p = self.big_point_array[0].copy()
-        for i, t in enumerate(times[1:]):
-            p[:, 0, :] += p[:, 1, :] * self.h
-
-            """
-            for j in range(10000):
-                p[:, 1, :] = (p[:, 0, :] - self.big_point_array[i, :, 0]) / self.h
-                force[:] = 0
-                diff[:] = 0
-                for element in self.elements:
-                    targets = element.target_ids
-                    force[targets] += element.eval(t, p[targets])
-                    diff[targets] += element.derivative(t, p[targets])
-
-                T = np.linalg.norm(force, axis=1)
-
-                if np.all(T[self.big_point_array_movable] < 0.01):
-                    np.set_printoptions(suppress=True)
-                    print(i, j, T)
-                    break
-
-                diff = diff * force[:, None, :] / T[:, None, None]
-                diff[np.isnan(diff)] = 0
-                p[self.big_point_array_movable, 0] -= (diff[self.big_point_array_movable, 0] + diff[self.big_point_array_movable, 1]*self.h)*0.001
-            """
-            from scipy.optimize import minimize
-            res = minim(getCost, p[self.big_point_array_movable, 0].ravel(), jac=True)
-            #res = minimize(getCost, p[self.big_point_array_movable, 0].ravel(), jac=True)
-            print(i, res)
-            p[self.big_point_array_movable, 0] = res["x"]
-            p[:, 1, :] = (p[:, 0, :] - self.big_point_array[i, :, 0]) / self.h
-            self.big_point_array[i + 1, self.big_point_array_movable, :, :] = p[self.big_point_array_movable]
-            #if i == 10:
-            #    break
-
     def simulateOverdamped(self, progressCallback=None):
         self.N = len(self.big_point_array_movable)
         times = np.arange(0, self.end_time, self.h)
@@ -251,46 +163,56 @@ class MySim:
             x = np.concatenate(([targets], [targets]))
             return x.T.ravel(), x.ravel()
 
-        force = np.zeros([self.N, 2])
-        diff = np.zeros([self.N, 2, 2])
+        F = np.zeros(self.N)
+        Fx = np.zeros([self.N, self.N])
+        Fv = np.zeros([self.N, self.N])
+
         p = self.big_point_array[0, :, 0, 0].copy()
         t_old = times[0]
+        # iterate over all times
         for i, t in enumerate(times[1:]):
-            p_old = p[:]
+            p_old = self.big_point_array[i, :, 0, 0]
+            F[:] = 0
+            Fx[:] = 0
+            Fv[:] = 0
 
-            F_all = np.zeros(self.N)
-            Fx_all = np.zeros([self.N, self.N])
-            Fy_all = np.zeros([self.N, self.N])
-
+            # iterate over all elements
             for element in self.elements:
+                # get the ids of the nodes
                 targets = element.target_ids
-                F, Fx, Fy = element.eval1d(t, p[targets], 1)
-                F_all[targets] += F
-                Fx_all[format(targets)] += np.asarray(Fx).ravel()
-                Fy_all[format(targets)] += np.asarray(Fy).ravel()
+                # get the matrices of the elements
+                F_node, Fx_node, Fy_node = element.eval1d(t, p[targets], 1)
+                # update the total nodes matrices
+                F[targets] += F_node
+                Fx[format(targets)] += np.asarray(Fx_node).ravel()
+                Fv[format(targets)] += np.asarray(Fy_node).ravel()
 
-            damped = ~np.all(Fy_all == 0, axis=1)
-            unconnected = np.all(Fx_all == 0, axis=1) & ~damped
+            # fixed nodes are non-movables or completely unconnected nodes
+            unconnected = np.all(Fx == 0, axis=1) & np.all(Fv == 0, axis=1)
             fixed = ~self.big_point_array_movable | unconnected
             free = ~fixed
 
-            Fy_all /= (t-t_old)
+            # divide Fv by Delta t
+            Fv /= (t-t_old)
 
-            Fxv = Fx_all + Fy_all
-            A = Fxv.copy()
-            A[:, fixed] = 0
-            A[fixed, fixed] = 1
-            x = np.linalg.inv(A) @ (Fy_all @ p_old - F_all - Fxv[:, fixed] @ p[fixed])
+            # combine the matrix to be inverted
+            Fxv = Fx + Fv
+            Fxv[:, fixed] = 0
+            Fxv[fixed, fixed] = 1
+            # solve for the positions of the free nodes
+            x = np.linalg.inv(Fxv) @ (Fv[:, free] @ p_old[free] - Fx[:, fixed] @ p[fixed] - F)
 
+            # the positions of the free nodes are used for the update
             self.big_point_array[i + 1, free, 0, 0] = x[free]
-            p = self.big_point_array[i + 1, :, 0, 0]
 
-            f = F_all + Fx_all @ p + Fy_all @ (p-p_old)
-
+            # store the old time
             t_old = t
 
+            # update the progress bar
             if progressCallback is not None:
                 progressCallback(i, len(self.times))
+
+        # a final update of the progress bar
         progressCallback(len(self.times), len(self.times))
 
     def plot_points(self, index, subplot):
