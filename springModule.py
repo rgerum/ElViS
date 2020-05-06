@@ -16,6 +16,15 @@ class MySim:
     big_point_array = None
 
     def __init__(self):
+
+        # set the end time and the time step
+        self.end_time = 10
+        self.h = 0.01
+        self.gamma = 0.01
+        self.m = 0.01
+
+        self.plot_point = 0
+
         # initialize the empty lists
         self.point_definitions = []
 
@@ -27,15 +36,17 @@ class MySim:
         if 1: # Maxwell
             # add initial points
             self.add_point(POINT_static, 0, 0)
-            self.add_point(POINT_dynamic, 3, 0)
-            self.add_point(POINT_dynamic, 2, 0)
             self.add_point(POINT_dynamic, 1, 0)
+            self.add_point(POINT_dynamic, 2, 0)
+            self.add_point(POINT_dynamic, 3, 0)
 
             # add initial elements
-            self.add_element(Dashpot(3, 2, strength=1))
-            self.add_element(Spring(0, 2, rest=-1, strength=1))
-            self.add_element(Spring(3, 1, rest=-1, strength=1))
-            self.add_element(Force(1, strength_x=1, t_start=1, t_end=3))
+            self.add_element(Spring(0, 1, rest=1, strength=1))
+            self.add_element(Dashpot(1, 2, strength=1))
+            self.add_element(Spring(2, 3, rest=1, strength=1))
+            self.add_element(Force(3, strength_x=1, t_start=1, t_end=3))
+
+            self.plot_point = 3
         elif 0:
             # add initial points
             self.add_point(POINT_static, 0, 0)
@@ -63,11 +74,6 @@ class MySim:
             self.add_element(Dashpot(1, 0, strength=1, drawoffset=-0.25))
             self.add_element(Force(1, strength_x=1, t_start=0, t_end=3))
 
-        # set the end time and the time step
-        self.end_time = 10
-        self.h = 0.01
-        self.gamma = 0.01
-        self.m = 0.01
 
     def serialize(self):
         text = "points = "

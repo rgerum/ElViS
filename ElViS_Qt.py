@@ -49,9 +49,9 @@ class MyList(QtWidgets.QListWidget):
             self.addItem(v)
 
 class Properites(QtWidgets.QWidget):
-    def __init__(self, layout, parent):
+    def __init__(self, layout, signal):
         super().__init__()
-        self.parent = parent
+        self.signal = signal
         layout.addWidget(self)
         QtWidgets.QVBoxLayout(self)
 
@@ -66,12 +66,12 @@ class Properites(QtWidgets.QWidget):
 
     def change_value(self, value, key):
         setattr(self.element, key, value)
-        self.parent.updateList()
+        self.signal.emit()
 
 
 class PropertiesSpring(Properites):
-    def __init__(self, layout, parent):
-        super().__init__(layout, parent)
+    def __init__(self, layout, signal):
+        super().__init__(layout, signal)
         self.properties = {
             "start": QInputChoice(self.layout(), "node 1", 0, [0], ["0"]),
             "end": QInputChoice(self.layout(), "node 2", 0, [0], ["0"]),
@@ -81,8 +81,8 @@ class PropertiesSpring(Properites):
         self.initSignals()
 
 class PropertiesDashpot(Properites):
-    def __init__(self, layout, parent):
-        super().__init__(layout, parent)
+    def __init__(self, layout, signal):
+        super().__init__(layout, signal)
         self.properties = {
             "start": QInputChoice(self.layout(), "node 1", 0, [0], ["0"]),
             "end": QInputChoice(self.layout(), "node 2", 0, [0], ["0"]),
@@ -92,8 +92,8 @@ class PropertiesDashpot(Properites):
 
 
 class PropertiesForce(Properites):
-    def __init__(self, layout, parent):
-        super().__init__(layout, parent)
+    def __init__(self, layout, signal):
+        super().__init__(layout, signal)
         self.properties = {
             "start": QInputChoice(self.layout(), "node 1", 0, [0], ["0"]),
             "strength_x": QInputNumber(self.layout(), "strength"),
@@ -103,8 +103,8 @@ class PropertiesForce(Properites):
         self.initSignals()
 
 class PropertiesPoint(Properites):
-    def __init__(self, layout, parent):
-        super().__init__(layout, parent)
+    def __init__(self, layout, signal):
+        super().__init__(layout, signal)
         self.properties = {
             0: QInputChoice(self.layout(), "fixed", 0, [0, 1], ["fixed", "free"]),
             1: QInputNumber(self.layout(), "x"),
@@ -121,7 +121,7 @@ class PropertiesPoint(Properites):
         data = self.element.get_point(self.index)
         data[key] = value
         self.element.set_point(self.index, data)
-        self.parent.updateList()
+        self.signal.emit()
 
 
 class ListPoints(QtWidgets.QWidget):
@@ -134,7 +134,7 @@ class ListPoints(QtWidgets.QWidget):
         self.list = MyList(layout)
         self.updateList()
         self.list.currentItemChanged.connect(self.selected)
-        self.input_properties = PropertiesPoint(layout, self)
+        self.input_properties = PropertiesPoint(layout, window.simulation_changed)
 
         self.input_remove = QtWidgets.QPushButton("remove")
         self.input_remove.clicked.connect(self.remove)
@@ -142,6 +142,8 @@ class ListPoints(QtWidgets.QWidget):
         self.input_add = QtWidgets.QPushButton("add")
         self.input_add.clicked.connect(self.add)
         layout.addWidget(self.input_add)
+
+        window.simulation_changed.connect(self.updateList)
 
     def remove(self):
         self.mysim.del_point(self.list.currentRow())
@@ -156,7 +158,6 @@ class ListPoints(QtWidgets.QWidget):
 
     def updateList(self):
         self.list.setData([str(e) for e in self.mysim.iter_points()])
-        self.window.drawPoints(0)
 
 
 class ListElements(QtWidgets.QWidget):
@@ -171,7 +172,7 @@ class ListElements(QtWidgets.QWidget):
         self.list.currentItemChanged.connect(self.selected)
         self.input_properties = {}
         for name, widget in [["Spring", PropertiesSpring], ["Dashpot", PropertiesDashpot], ["Force", PropertiesForce]]:
-            self.input_properties[name] = widget(layout, self)
+            self.input_properties[name] = widget(layout, window.simulation_changed)
             self.input_properties[name].setVisible(False)
 
         self.input_remove = QtWidgets.QPushButton("remove")
@@ -183,6 +184,8 @@ class ListElements(QtWidgets.QWidget):
         self.input_add = QtWidgets.QPushButton("add")
         self.input_add.clicked.connect(self.add)
         layout.addWidget(self.input_add)
+
+        window.simulation_changed.connect(self.updateList)
 
     def remove(self):
         self.mysim.elements.pop(self.list.currentRow())
@@ -205,9 +208,26 @@ class ListElements(QtWidgets.QWidget):
 
     def updateList(self):
         self.list.setData([str(e) for e in self.mysim.elements])
-        self.window.drawPoints(0)
+
+class PropertiesSimulation(Properites):
+    def __init__(self, layout, simulation, signal):
+        super().__init__(layout, signal)
+        self.properties = {
+            "end_time": QInputNumber(self.layout(), "Time", value=10),
+            "h": QInputNumber(self.layout(), "Delta T", value=0.1),
+            "plot_point": QInputChoice(self.layout(), "Plot Node", 0, [0], ["0"]),
+        }
+        self.initSignals()
+        self.setTarget(simulation)
+        signal.connect(self.setTarget)
+
+    def setTarget(self, element=None):
+        element = element if element is not None else self.element
+        self.properties["plot_point"].setChoices(np.arange(element.big_point_array_movable.shape[0]))
+        super().setTarget(element)
 
 class Window(QtWidgets.QWidget):
+    simulation_changed = QtCore.Signal()
     time = 0
 
     def __init__(self):
@@ -219,6 +239,9 @@ class Window(QtWidgets.QWidget):
         layout.addLayout(left_pane)
         right_pane = QtWidgets.QVBoxLayout()
         layout.addLayout(right_pane)
+
+
+        self.mysim = springModule.MySim()
 
         self.canvas = FigureCanvas(Figure(figsize=(5, 3)))
         left_pane.addWidget(self.canvas)
@@ -237,13 +260,15 @@ class Window(QtWidgets.QWidget):
         self.button_start.clicked.connect(self.buttonRunClick)
         right_pane.addWidget(self.button_start)
 
+        self.properties_sim = PropertiesSimulation(right_pane, self.mysim, self.simulation_changed)
+        """
         self.config_time = QInputNumber(right_pane, "Time", value=10)
         self.config_delta = QInputNumber(right_pane, "Delta T", value=0.1)
+        self.config_target = QInputChoice(right_pane, "Plot Node", 0, [0], ["0"]),
+        """
 
         #self.points_input = QtWidgets.QPlainTextEdit()
         #right_pane.addWidget(self.points_input)
-
-        self.mysim = springModule.MySim()
 
         self.list1 = ListPoints(right_pane, self.mysim, self)
         self.list = ListElements(right_pane, self.mysim, self)
@@ -254,6 +279,12 @@ class Window(QtWidgets.QWidget):
 
         self.buttonRunClick()
         self.timeChanged()
+
+        self.simulation_changed.connect(self.simChanged)
+
+    def simChanged(self):
+        self.drawPoints(0)
+        self.drawCurve()
 
     def timeChange(self, event):
         #if (len(self.mysim.all_points) <= 1):
@@ -285,7 +316,7 @@ class Window(QtWidgets.QWidget):
         self.subplot_curve.set_ylabel("displacement")
         if 1:#len(self.mysim.all_points) > 1:
             try:
-                self.mysim.plotCurve(1, 0, self.subplot_curve, self.time, "normal")
+                self.mysim.plotCurve(self.mysim.plot_point, 0, self.subplot_curve, self.time, "normal")
             except IOError:
                 pass
             self.subplot_curve.grid(True)
@@ -298,8 +329,8 @@ class Window(QtWidgets.QWidget):
             del self.mysim.all_points
             self.mysim.all_points = [self.mysim.points]
 
-        self.mysim.end_time = float(self.config_time.value())
-        self.mysim.h = float(self.config_delta.value())
+        #self.mysim.end_time = float(self.config_time.value())
+        #self.mysim.h = float(self.config_delta.value())
 
         self.mysim.simulateOverdamped(self.progressCallback)
         self.time_slider.setRange(0, self.mysim.end_time/self.mysim.h-1)
