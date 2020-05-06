@@ -166,6 +166,7 @@ class ListElements(QtWidgets.QWidget):
         parent.addWidget(self)
         self.mysim = mysim
         self.window = window
+        self.signal = window.simulation_changed
         layout = QtWidgets.QVBoxLayout(self)
         self.list = MyList(layout)
         self.updateList()
@@ -189,11 +190,11 @@ class ListElements(QtWidgets.QWidget):
 
     def remove(self):
         self.mysim.elements.pop(self.list.currentRow())
-        self.updateList()
+        self.signal.emit()
 
     def add(self):
         self.mysim.elements.append(self.input_type.value()())
-        self.updateList()
+        self.signal.emit()
 
     def selected(self, item):
         element = self.mysim.elements[self.list.currentRow()]
@@ -326,6 +327,7 @@ class Window(QtWidgets.QWidget):
             self.simulation_changed.emit()
 
     def simChanged(self):
+        self.mysim.updateDrawOffsets()
         self.drawPoints(0)
         self.drawCurve()
 

@@ -85,6 +85,17 @@ class MySim:
             self.elements = []
             for element in data["elements"]:
                 self.add_element(eval(element[0])(*element[1:]))
+        self.updateDrawOffsets()
+
+    def updateDrawOffsets(self):
+        element_count = np.zeros(self.get_point_count())
+        for element in self.elements:
+            point = np.min(element.target_ids)
+            element.drawoffset = element_count[point]/2
+            element_count[point] += 1
+        for element in self.elements:
+            point = np.min(element.target_ids)
+            element.drawoffset -= (element_count[point]-1)/4
 
     def serialize(self):
         text = "points = "
