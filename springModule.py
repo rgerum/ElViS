@@ -44,7 +44,7 @@ class MySim:
             self.add_element(Spring(0, 1, rest=1, strength=1))
             self.add_element(Dashpot(1, 2, strength=1))
             self.add_element(Spring(2, 3, rest=1, strength=1))
-            self.add_element(Force(3, strength_x=1, t_start=1, t_end=3))
+            self.add_element(Force(3, strength=1, t_start=1, t_end=3))
 
             self.plot_point = 3
         elif 0:
@@ -56,14 +56,14 @@ class MySim:
             # add initial elements
             self.add_element(Dashpot(0, 1, strength=1))
             self.add_element(Spring(1, 2, rest=1, strength=1))
-            self.add_element(Force(2, strength_x=1, t_start=1, t_end=3))
+            self.add_element(Force(2, strength=1, t_start=1, t_end=3))
         elif 0:
             self.add_point(POINT_static, 1, 0)
             self.add_point(POINT_dynamic, 2, 0)
 
             # add initial elements
             self.add_element(Spring(1, 0, rest=-1, strength=1, drawoffset=0))
-            self.add_element(Force(1, strength_x=1, t_start=1, t_end=3))
+            self.add_element(Force(1, strength=1, t_start=1, t_end=3))
         else:  # Kelvin Voigt
             # add initial points
             self.add_point(POINT_static, 0, 0)
@@ -72,8 +72,19 @@ class MySim:
             # add initial elements
             #self.add_element(Spring(1, 0, rest=-1, strength=1, drawoffset=0.25))
             self.add_element(Dashpot(1, 0, strength=1, drawoffset=-0.25))
-            self.add_element(Force(1, strength_x=1, t_start=0, t_end=3))
+            self.add_element(Force(1, strength=1, t_start=0, t_end=3))
 
+    def setData(self, data):
+        if "plot_point" in data:
+            self.plot_point = data["plot_point"]
+        if "points" in data:
+            self.big_point_array = None
+            for point in data["points"]:
+                self.add_point(*point)
+        if "elements" in data:
+            self.elements = []
+            for element in data["elements"]:
+                self.add_element(eval(element[0])(*element[1:]))
 
     def serialize(self):
         text = "points = "
@@ -101,7 +112,7 @@ class MySim:
         # add an element to the list of elements
         self.elements.append(element)
 
-    def add_point(self, type, x, y):
+    def add_point(self, type, x, y=0):
         if self.big_point_array is None:
             self.big_point_array = np.zeros([1, 0, 2, 2])
             self.big_point_array_movable = np.zeros([0], dtype=np.bool)

@@ -63,6 +63,9 @@ class Spring(Element):
     rest = 1
     strength = 1
 
+    def __init__(self, start, end, strength, rest):
+        super().__init__(start, end, strength=strength, rest=rest)
+
     def draw(self, subplot, points):
         start, end = points[:, 0]
         # difference vector
@@ -127,6 +130,9 @@ class Spring(Element):
 
 class Dashpot(Element):
     strength = 1
+
+    def __init__(self, start, end, strength):
+        super().__init__(start, end, strength=strength)
 
     def draw(self, subplot, points):
         start, end = points[:, 0]
@@ -208,8 +214,8 @@ class Force(Element):
 
     num_targets = 1
 
-    def __init__(self, start, **kwargs):
-        super().__init__(start, **kwargs)
+    def __init__(self, start, strength=1, t_start=1, t_end=3):
+        super().__init__(start, strength_x=strength, t_start=t_start, t_end=t_end)
         self.target_ids = [start]
 
     def draw(self, subplot, points):

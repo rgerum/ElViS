@@ -240,6 +240,12 @@ class Window(QtWidgets.QWidget):
         right_pane = QtWidgets.QVBoxLayout()
         layout.addLayout(right_pane)
 
+        layout_buttons = QtWidgets.QHBoxLayout()
+        left_pane.addLayout(layout_buttons)
+        for i in range(5):
+            button = QtWidgets.QPushButton(str(i+1))
+            layout_buttons.addWidget(button)
+            button.clicked.connect(lambda x, i=i: self.setPreset(i))
 
         self.mysim = springModule.MySim()
 
@@ -281,6 +287,43 @@ class Window(QtWidgets.QWidget):
         self.timeChanged()
 
         self.simulation_changed.connect(self.simChanged)
+
+    def setPreset(self, i):
+        data = None
+        if i == 0:
+            data = {
+                "plot_point": 1,
+                "points": [[0, 0], [1, 1]],
+                "elements": [["Dashpot", 0, 1, 1], ["Force", 1, 1]],
+            }
+        elif i == 1:
+            data = {
+                "plot_point": 1,
+                "points": [[0, 0], [1, 1]],
+                "elements": [["Spring", 0, 1, 1, 1], ["Spring", 0, 1, 1, 1], ["Force", 1, 1]],
+            }
+        elif i == 2:
+            data = {
+                "plot_point": 2,
+                "points": [[0, 0], [1, 1], [1, 2]],
+                "elements": [["Dashpot", 0, 1, 1], ["Spring", 1, 2, 1, 1], ["Force", 2, 1]],
+            }
+        elif i == 3:
+            data = {
+                "plot_point": 2,
+                "points": [[0, 0], [1, 1], [1, 2]],
+                "elements": [["Spring", 0, 1, 1, 1], ["Dashpot", 1, 2, 1], ["Spring", 1, 2, 1, 1], ["Force", 2, 1]],
+            }
+        elif i == 4:
+            data = {
+                "plot_point": 2,
+                "points": [[0, 0], [1, 1], [1, 2]],
+                "elements": [["Dashpot", 0, 1, 1], ["Dashpot", 1, 2, 1], ["Spring", 1, 2, 1, 1], ["Force", 2, 1]],
+            }
+        if data is not None:
+            self.mysim.setData(data)
+            self.buttonRunClick()
+            self.simulation_changed.emit()
 
     def simChanged(self):
         self.drawPoints(0)
