@@ -27,12 +27,14 @@ class MySim:
         if 1: # Maxwell
             # add initial points
             self.add_point(POINT_static, 0, 0)
+            self.add_point(POINT_dynamic, 3, 0)
             self.add_point(POINT_dynamic, 2, 0)
             self.add_point(POINT_dynamic, 1, 0)
 
             # add initial elements
-            self.add_element(Dashpot(0, 2, strength=1))
-            self.add_element(Spring(1, 2, rest=-1, strength=1))
+            self.add_element(Dashpot(3, 2, strength=1))
+            self.add_element(Spring(0, 2, rest=-1, strength=1))
+            self.add_element(Spring(3, 1, rest=-1, strength=1))
             self.add_element(Force(1, strength_x=1, t_start=1, t_end=3))
         elif 0:
             # add initial points
@@ -44,7 +46,7 @@ class MySim:
             self.add_element(Dashpot(0, 1, strength=1))
             self.add_element(Spring(1, 2, rest=1, strength=1))
             self.add_element(Force(2, strength_x=1, t_start=1, t_end=3))
-        elif 1:
+        elif 0:
             self.add_point(POINT_static, 1, 0)
             self.add_point(POINT_dynamic, 2, 0)
 
@@ -57,9 +59,9 @@ class MySim:
             self.add_point(POINT_dynamic, 1, 0)
 
             # add initial elements
-            self.add_element(Spring(1, 0, rest=-1, strength=1, drawoffset=0.25))
+            #self.add_element(Spring(1, 0, rest=-1, strength=1, drawoffset=0.25))
             self.add_element(Dashpot(1, 0, strength=1, drawoffset=-0.25))
-            self.add_element(Force(1, strength_x=1, t_start=1, t_end=3))
+            self.add_element(Force(1, strength_x=1, t_start=0, t_end=3))
 
         # set the end time and the time step
         self.end_time = 10
@@ -218,7 +220,7 @@ class MySim:
         self.N = len(self.big_point_array_movable)
         times = np.arange(0, self.end_time, self.h)
         # double time values
-        times = np.concatenate(([times], [times])).T.ravel()[1:-1]
+        #times = np.concatenate(([times], [times])).T.ravel()[1:-1]
         self.times = times
 
         p = self.big_point_array[0].copy()
@@ -234,17 +236,18 @@ class MySim:
 
         force = np.zeros([self.N, 2])
         diff = np.zeros([self.N, 2, 2])
-        p = self.big_point_array[0].copy()
+        p = self.big_point_array[0, :, 0, 0].copy()
+        t_old = times[0]
         for i, t in enumerate(times[1:]):
-            if i % 2 == 0:
-                p[:, 0, :] += p[:, 1, :] * self.h
+            p_old = p[:]
+
             F_all = np.zeros(self.N)
             Fx_all = np.zeros([self.N, self.N])
             Fy_all = np.zeros([self.N, self.N])
 
             for element in self.elements:
                 targets = element.target_ids
-                F, Fx, Fy = element.eval1d(t, p[targets], i % 2)
+                F, Fx, Fy = element.eval1d(t, p[targets], 1)
                 F_all[targets] += F
                 Fx_all[format(targets)] += np.asarray(Fx).ravel()
                 Fy_all[format(targets)] += np.asarray(Fy).ravel()
@@ -254,23 +257,20 @@ class MySim:
             fixed = ~self.big_point_array_movable | unconnected
             free = ~fixed
 
-            # F^y_ij = d_ij for i in {fixed nodes}
-            Fy_all[:, fixed] = 0
-            Fy_all[fixed, fixed] = 1
+            Fy_all /= (t-t_old)
 
-            A = Fx_all.copy()
-            #
+            Fxv = Fx_all + Fy_all
+            A = Fxv.copy()
             A[:, fixed] = 0
             A[fixed, fixed] = 1
-            B = Fx_all.copy()
-            B[:, ~fixed] = 0
-            x = - np.linalg.inv(A[~damped][:, ~damped]) @ (F_all[~damped] + B[~damped][:, ~damped] @ p[~damped, 0, 0] + Fx_all[~damped][:, damped] @ p[damped, 0, 0])
-            p[free & ~damped, 0, 0] = x[free[~damped]]
+            x = np.linalg.inv(A) @ (Fy_all @ p_old - F_all - Fxv[:, fixed] @ p[fixed])
 
-            v = - np.linalg.inv(Fy_all[damped][:, damped]) @ (F_all[damped] + Fx_all[damped, :] @ p[:, 0, 0])
-            p[free & damped, 1, 0] = v[free[damped]]
+            self.big_point_array[i + 1, free, 0, 0] = x[free]
+            p = self.big_point_array[i + 1, :, 0, 0]
 
-            self.big_point_array[i + 1, self.big_point_array_movable, :, 0] = p[self.big_point_array_movable, :, 0]
+            f = F_all + Fx_all @ p + Fy_all @ (p-p_old)
+
+            t_old = t
 
             if progressCallback is not None:
                 progressCallback(i, len(self.times))

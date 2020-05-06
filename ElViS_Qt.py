@@ -40,8 +40,6 @@ class MyList(QtWidgets.QListWidget):
             remove = []
 
         for i in remove:
-            for name in dir(self):
-                print(name)
             self.takeItem(i)
 
         for i, v in enumerate(update):
