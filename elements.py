@@ -57,7 +57,8 @@ class Element:
             params.append("%s=%s" % (name, str(getattr(self, name))))
         return "%s(%s)" % (my_class.__name__, ", ".join(params))
 
-
+    def __str__(self):
+        return f"{type(self).__name__}({self.start}, {self.end}, {self.strength})"
 
 class Spring(Element):
     rest = 1
@@ -128,8 +129,6 @@ class Spring(Element):
 
         return [[[-x, -y], [0, 0]], [[-x, -y], [0, 0]]]
 
-    def __str__(self):
-        return "%d-%d Spring %f %f" % (self.start, self.end, self.rest, self.strength)
 
 class Dashpot(Element):
     strength = 1
@@ -207,13 +206,11 @@ class Dashpot(Element):
 
         return np.array([[[0, 0], [-x, -y]], [[0, 0], [-x, -y]]])
 
-    def __str__(self):
-        return "%d-%d Viscous (eta %f)" % (self.start, self.end, self.strength)
 
 class Force(Element):
     t_start = 0
     t_end = 10
-    strength_x = 1
+    strength = 1
     strength_y = 0
     duration_rise = 0.1
     duration_fall = 0.2
@@ -227,7 +224,7 @@ class Force(Element):
     def draw(self, subplot, points):
         start = points[:, 0]
         # difference vector
-        dist = np.array([self.strength_x, self.strength_y])
+        dist = np.array([self.strength, self.strength_y])
         end = start + dist
         # normalized normal vector
         norm = np.array([-dist[1], dist[0]]) / np.linalg.norm(dist)
@@ -243,22 +240,22 @@ class Force(Element):
     def eval(self, t, points):
         # the force is only active for times between t_start and t_end
         if self.t_start <= t < self.t_end:
-            return [[self.strength_x, self.strength_y]]
+            return [[self.strength, self.strength_y]]
             factor1 = (t - self.t_start) / self.duration_rise
             factor2 = (self.t_end - t) / self.duration_fall
             factor = np.min([factor1, 1, factor2])
-            return np.array([[self.strength_x * factor, self.strength_y * factor]])
+            return np.array([[self.strength * factor, self.strength_y * factor]])
         return [[0, 0]]
 
     def eval1d(self, t, points, after):
         if not after:
             if self.t_start < t <= self.t_end:
-                F = [self.strength_x]
+                F = [self.strength]
             else:
                 F = [0]
         else:
             if self.t_start <= t < self.t_end:
-                F = [self.strength_x]
+                F = [self.strength]
             else:
                 F = [0]
         Fx = [[0]]
@@ -269,7 +266,22 @@ class Force(Element):
         return [[0, 0], [0, 0]]
 
     def __str__(self):
-        return "%d Force (%f, %f-%f)" % (self.start, self.strength_x, self.t_start, self.t_end)
+        return f"{self.start} {type(self).__name__} ({self.strength}, {self.t_start}-{self.t_end})"
 
     def targets(self):
         return [self.start]
+
+
+class SinForce(Force):
+    def __init__(self, start=0, strength=1, t_start=0, t_end=9999):
+        super().__init__(start, strength=strength, t_start=t_start, t_end=t_end)
+        self.target_ids = [start]
+
+    def eval1d(self, t, points, after):
+        if self.t_start <= t < self.t_end:
+            F = [self.strength * np.cos(t * 2 * np.pi)]
+        else:
+            F = [0]
+        Fx = [[0]]
+        Fy = [[0]]
+        return F, Fx, Fy

@@ -14,7 +14,7 @@ from matplotlib.figure import Figure
 from typing import Any
 
 import springModule
-from elements import Spring, Dashpot, Force
+from elements import Spring, Dashpot, Force, SinForce
 from QtShortCuts import QInputNumber, QInputChoice
 
 
@@ -106,6 +106,18 @@ class PropertiesForce(Properites):
         self.initSignals()
 
 
+class PropertiesSinForce(Properites):
+    def __init__(self, layout: QtWidgets.QLayout, signal: QtCore.Signal):
+        super().__init__(layout, signal)
+        self.properties = {
+            "start": QInputChoice(self.layout(), "node 1", 0, [0], ["0"]),
+            "strength_x": QInputNumber(self.layout(), "strength"),
+            "t_start": QInputNumber(self.layout(), "time start"),
+            "t_end": QInputNumber(self.layout(), "time end"),
+        }
+        self.initSignals()
+
+
 class PropertiesPoint(Properites):
     def __init__(self, layout: QtWidgets.QLayout, signal: QtCore.Signal):
         super().__init__(layout, signal)
@@ -176,7 +188,7 @@ class ListElements(QtWidgets.QWidget):
         self.updateList()
         self.list.currentItemChanged.connect(self.selected)
         self.input_properties = {}
-        for name, widget in [["Spring", PropertiesSpring], ["Dashpot", PropertiesDashpot], ["Force", PropertiesForce]]:
+        for name, widget in [["Spring", PropertiesSpring], ["Dashpot", PropertiesDashpot], ["Force", PropertiesForce], ["SinForce", PropertiesSinForce]]:
             self.input_properties[name] = widget(layout, window.simulation_changed)
             self.input_properties[name].setVisible(False)
 
@@ -185,7 +197,7 @@ class ListElements(QtWidgets.QWidget):
         layout.addWidget(self.input_remove)
         layout = QtWidgets.QHBoxLayout()
         self.layout().addLayout(layout)
-        self.input_type = QInputChoice(layout, "Type", Spring, [Spring, Dashpot, Force], ["Spring", "Dashpot", "Force"])
+        self.input_type = QInputChoice(layout, "Type", Spring, [Spring, Dashpot, Force, SinForce], ["Spring", "Dashpot", "Force", "SinForce"])
         self.input_add = QtWidgets.QPushButton("add")
         self.input_add.clicked.connect(self.add)
         layout.addWidget(self.input_add)
