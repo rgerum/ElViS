@@ -107,7 +107,7 @@ class Spring(Element):
 
     def eval1d(self, t, points, before):
         if self.start == self.end:
-            return [0], [[0,0], [0,0]], [[0,0], [0,0]]
+            return [0, 0], [[0,0], [0,0]], [[0,0], [0,0]]
         F = [-self.rest*self.strength, self.rest*self.strength]
         Fx = [[-self.strength, self.strength], [self.strength, -self.strength]]
         Fy = [[0, 0], [0, 0]]
@@ -189,7 +189,7 @@ class Dashpot(Element):
 
     def eval1d(self, t, points, before):
         if self.start == self.end:
-            return [0], [[0,0], [0,0]], [[0,0], [0,0]]
+            return [0, 0], [[0,0], [0,0]], [[0,0], [0,0]]
         F = [0, 0]
         Fx = [[0, 0], [0, 0]]
         Fy = [[-self.strength, self.strength], [self.strength, -self.strength]]
