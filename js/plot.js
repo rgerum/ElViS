@@ -134,13 +134,11 @@ class Plot {
                     .attr("stroke-width", 3)
 
                 var mousemover = () => {
-                    console.log("hover", d, i);
                     self.line_group.selectAll("path")
                         .attr("filter", (d, ii) => ii == i ? "saturate(1)" : "saturate(0)")
                         .attr("opacity", (d, ii) => ii == i ? "1" : "0.4")
                 }
                 var mouseout = () => {
-                    console.log("hover", d, i);
                     self.line_group.selectAll("path")
                         .attr("filter", "none")
                         .attr("opacity", "1")
@@ -269,18 +267,33 @@ class Display {
         var paths = this.line_group.selectAll(".element")
             .data(datasets)
 
-        paths.enter().append("g")
+        let display = this;
+
+        let paths_enter = paths.enter().append("g")
             .attr("class", "element")
-            .on("mouseover", function() { d3.select(this).attr("stroke-width", 3);})
-            .on("mouseout", function() { d3.select(this).attr("stroke-width", 1);})
-            .on("click", function(d, i) { selectedElement(i);} )
-            .merge(paths)
+
+            .call(d3.drag().on("drag", function() {
+
+                })
+            )
+        paths_enter.merge(paths)
             .each(function(d, i) {
-                let p = d3.select(this).selectAll("path").data(d)
+                let p = d3.select(this).selectAll("path").data(d.lines)
                 p.enter().append("path")
                     .merge(p)
                     .attr("d", line).attr("fill", "none").attr("stroke", "darkgreen")
                 p.exit().remove();
+                let r = d3.select(this).selectAll("rect").data([d.rect])
+                r.enter().append("rect")
+                    .attr("fill", "transparent")
+                    .style("opacity", 0.5)
+                    .on("mouseover", function() { d3.select(this.parentElement).attr("stroke-width", 3);})
+                    .on("mouseout", function() { d3.select(this.parentElement).attr("stroke-width", 1);})
+                    .on("click", function(d) { selectedElement(i);} )
+                    .merge(r)
+                    .attr("x", d=>display.scale(d.x)).attr("width", d=>display.scale(d.x+d.width)-display.scale(d.x))
+                    .attr("y", d=>display.scale(d.y)).attr("height", d=>display.scale(d.y+d.height)-display.scale(d.y))
+
             })
         paths.exit().remove();
     }
