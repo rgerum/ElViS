@@ -146,10 +146,17 @@
 </head>
 <body>
 <div style="width:600px; margin:0 auto">
-<div id="buttons"></div>
-<svg id="display"></svg>
-<svg id="plot"></svg>
-<svg id="slider" width="500" height="30"></svg>
+    <div id="buttons"></div>
+    <form>
+        <select id="type">
+            <option value="Spring">Spring</option>
+            <option value="Dashpot">Dashpot</option>
+        </select>
+        <input id="input_number" type="number" value="1"/>
+    </form>
+    <svg id="display"></svg>
+    <svg id="plot"></svg>
+    <svg id="slider" width="500" height="30"></svg>
 </div>
 <script>
     function getDataPreset(i) {
@@ -207,13 +214,40 @@
 
     sim.updateDrawOffsets();
     display.setData(sim.draw());
-    display.setPoints(sim.points);
+    display.setPoints(sim.points, sim);
 
-    function setData(data){
+    let selected_element_id;
+    function selectedElement(i) {
+        let element = sim.elements[i];
+        selected_element_id = i;
+        document.getElementById("input_number").value = element.strength;
+        document.getElementById("type").value = element.constructor.name;
+    }
+    document.getElementById("input_number").oninput = function() {
+        if(selected_element_id != undefined) {
+            sim.elements[selected_element_id].strength = this.value;
+            updateSystem();
+        }
+    }
+    document.getElementById("type").oninput = function() {
+        if(selected_element_id != undefined) {
+            let element = sim.elements[selected_element_id]
+            let element2 = new {"Spring": Spring, "Dashpot": Dashpot}[this.value](element.start, element.end, element.strength);
+            sim.elements[selected_element_id] = element2;
+            sim.updateDrawOffsets();
+            updateSystem();
+        }
+        console.log(this);
+    }
+
+    function setData(data) {
         sim.setData(data);
+        updateSystem();
+    }
+    function updateSystem() {
         sim.simulateOverdamped();
         display.setData(sim.draw());
-        display.setPoints(sim.points);
+        display.setPoints(sim.points, sim);
         slider.setValue(0);
         plot.setXlim(0, sim.times[sim.times.length-1]);
         plot.setYlim(d3.min(sim.data), d3.max(sim.data));
@@ -225,7 +259,7 @@
     slider.onValueChanged = function(d) {
         d = parseInt(d);
         display.setData(sim.draw(d));
-        display.setPoints(sim.get_points(d));
+        display.setPoints(sim.get_points(d), sim);
         plot.setCursor(sim.times[d], sim.data[d]);
     };
 </script>
