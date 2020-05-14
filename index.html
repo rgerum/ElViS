@@ -147,13 +147,11 @@
 <body>
 <div style="width:600px; margin:0 auto">
     <div id="buttons"></div>
-    <form>
-        <select id="type">
-            <option value="Spring">Spring</option>
-            <option value="Dashpot">Dashpot</option>
-        </select>
-        <input id="input_number" type="number" value="1" min="0"/>
-    </form>
+    <select id="type" disabled>
+        <option value="Spring">Spring</option>
+        <option value="Dashpot">Dashpot</option>
+    </select>
+    <input id="input_number" type="number" value="1" min="0" disabled/>
     <svg id="display"></svg>
     <svg id="plot"></svg>
     <svg id="slider" width="500" height="30"></svg>
@@ -221,7 +219,14 @@
         let element = sim.elements[i];
         selected_element_id = i;
         document.getElementById("input_number").value = element.strength;
+        document.getElementById("input_number").disabled = false;
         document.getElementById("type").value = element.constructor.name;
+        document.getElementById("type").disabled = false;
+    }
+    function deselectElement() {
+        selected_element_id = undefined;
+        document.getElementById("input_number").disabled = true;
+        document.getElementById("type").disabled = true;
     }
     document.getElementById("input_number").oninput = function() {
         if(selected_element_id != undefined) {
@@ -241,6 +246,7 @@
     }
 
     function setData(data) {
+        deselectElement();
         sim.setData(data);
         updateSystem();
     }
