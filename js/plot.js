@@ -255,6 +255,15 @@ class Display {
         this.y_axis_svg.selectAll(".label").text(label)
     }
 
+    selectElement(i) {
+        var paths = this.line_group.selectAll(".element").each(
+            function(d, ii) {
+                d3.select(this).selectAll("path")
+                    .attr("stroke", i == ii ? "orange" : "darkgreen")
+            }
+        )
+    }
+
     setData(datasets, labels) {
         /*
         this.setXlim(d3.min(datasets, function(d) { return d3.min(d.x); }),

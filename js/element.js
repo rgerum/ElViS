@@ -224,6 +224,9 @@ class System {
         [
             new Spring(0, 1, 1, 1),
             new Dashpot(0, 1, 1),
+        ];
+        this.external =
+        [
             new Force(1, 1, 1, 3)
         ];
         this.end_time = 10;
@@ -281,6 +284,19 @@ class System {
         return elements;
     }
 
+    drawForces(i) {
+        let elements = [];
+        let points = this.get_points(i);
+        for(let element of this.external) {
+            let p = [];
+            for(let i of element.target_ids) {
+                p.push([points[i][1], 0]);
+            }
+            elements.push(element.draw(p, i*this.h));
+        }
+        return elements;
+    }
+
     simulateOverdamped() {
         let points = this.get_points();
         for(let element of this.elements) {
@@ -290,6 +306,8 @@ class System {
             }
             element.init(p);
         }
+        this.external[0].start = this.plot_point;
+        this.external[0].target_ids[0] = this.plot_point;
 
         this.points_trajectory = [];
         this.times = [0];
@@ -315,13 +333,15 @@ class System {
             let Fx = zeros(N, N);
             let Fv = zeros(N, N);
 
-            for(let element of this.elements) {
-                let [F_node, Fx_node, Fv_node] = element.eval(t);
-                for(let i in element.target_ids) {
-                    F[element.target_ids[i]] += F_node[i];
-                    for(let j in element.target_ids) {
-                        Fx[element.target_ids[i]][element.target_ids[j]] += Fx_node[i][j];
-                        Fv[element.target_ids[i]][element.target_ids[j]] += Fv_node[i][j]/this.h;
+            for(let group of [this.elements, this.external]) {
+                for (let element of group) {
+                    let [F_node, Fx_node, Fv_node] = element.eval(t);
+                    for (let i in element.target_ids) {
+                        F[element.target_ids[i]] += F_node[i];
+                        for (let j in element.target_ids) {
+                            Fx[element.target_ids[i]][element.target_ids[j]] += Fx_node[i][j];
+                            Fv[element.target_ids[i]][element.target_ids[j]] += Fv_node[i][j] / this.h;
+                        }
                     }
                 }
             }
