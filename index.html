@@ -210,9 +210,16 @@
     plot.setXLabel("time")
     plot.legend(400, 0);
     let display = new Display(d3.select("#display"), {});
-    let slider = new Slider("#slider", {range: [0, 500-1], value: 0, play:true});
+    let slider = new Slider("#slider", {range: [0, 500-1], value: 0, play:true, step: 10});
     let sim = new System();
     sim.simulateOverdamped();
+
+    window.onkeydown = function(ev) {
+        if(ev.key == "ArrowLeft")
+            slider.setValue(slider.value() - slider.step)
+        if(ev.key == "ArrowRight")
+            slider.setValue(slider.value() + slider.step)
+    }
 
     plot.setXlim(0, sim.times[sim.times.length-1]);
     plot.setYlim(d3.min(sim.data), d3.max(sim.data));

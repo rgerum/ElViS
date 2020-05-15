@@ -1,6 +1,6 @@
 
 class Slider {
-    constructor(query, {play = false, range= [0,100], value= 0, add_to_existing_svg= false, x=0, y=0, left_text_offset=0, width= 500} = {}) {
+    constructor(query, {play = false, range= [0,100], value= 0, add_to_existing_svg= false, x=0, y=0, left_text_offset=0, width= 500, step=1} = {}) {
         var svg = d3.select(query);
         var width, height, margin;
         if(!add_to_existing_svg) {
@@ -28,6 +28,7 @@ class Slider {
         }
 
         this.left_text_offset = left_text_offset;
+        this.step = step;
 
 
         this.current_value = value;
@@ -100,12 +101,12 @@ class Slider {
                 .attr("class", "handle")
                 .attr("transform", "translate("+(width+ 20)+", 0)")
                 .attr("d", d3.line()([[0, -9], [-0.6*9 * Math.sqrt(2), 0], [0, 9], [0, -9]]))
-                .on("click", () => this.setValue(this.value()-1))
+                .on("click", () => this.setValue(this.value()-this.step))
             this.button_right = slider.append("path")
                 .attr("class", "handle")
                 .attr("transform", "translate("+(width+ 20+5)+", 0)")
                 .attr("d", d3.line()([[0, -9], [0.6*9 * Math.sqrt(2), 0], [0, 9], [0, -9]]))
-                .on("click", () => this.setValue(this.value()+1))
+                .on("click", () => this.setValue(this.value()+this.step))
         }
         this.setValue(value);
     }
@@ -185,7 +186,7 @@ class Slider {
         }
     }
     next() {
-        this.setValue(this.current_value + 1);
+        this.setValue(this.current_value + this.step);
     }
     loop(millies) {
         this.play(millies);
