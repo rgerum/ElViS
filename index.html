@@ -148,7 +148,7 @@
 <div style="width:600px; margin:0 auto">
     <div id="buttons"></div>
     <select id="type_external">
-        <option value="Force">Force</option>
+        <option value="Force" selected>Force</option>
         <option value="Displacement">Displacement</option>
     </select>
     strength:
@@ -208,6 +208,7 @@
 
     let plot = new Plot(d3.select("#plot"), {xlabel: "time", ylabel: "displacement", left: 100, bottom: 100});
     plot.setXLabel("time")
+    plot.legend(400, 0);
     let display = new Display(d3.select("#display"), {});
     let slider = new Slider("#slider", {range: [0, 500-1], value: 0, play:true});
     let sim = new System();
@@ -219,22 +220,33 @@
     //for(let i = 0; i < data.length; i++)
     //    data2.push({x: sim.times[i], y: data[i]});
     //plot.setData([data2], ["displacement"])
-    plot.setData([{x: sim.times, y: sim.data}], ["displacement"])
+    plot.setData([{x: sim.times, y: sim.data}, {x: sim.times, y:sim.dataF}], ["displacement", "force"])
 
     sim.updateDrawOffsets();
     display.setData(sim.draw());
     display.setPoints(sim.points, sim);
 
+    document.getElementById("force_strength").value = sim.external[0].strength;
     document.getElementById("force_strength").oninput = function() {
         sim.external[0].strength = this.value;
         updateSystem();
     }
+    document.getElementById("force_start").value = sim.external[0].t_start;
     document.getElementById("force_start").oninput = function() {
         sim.external[0].t_start = this.value;
         updateSystem();
     }
+    document.getElementById("force_end").value = sim.external[0].t_end;
     document.getElementById("force_end").oninput = function() {
         sim.external[0].t_end = this.value;
+        updateSystem();
+    }
+    document.getElementById("type_external").value = sim.external[0].constructor.name;
+    document.getElementById("type_external").oninput = function() {
+        let element = sim.external[0]
+        let element2 = new {"Force": Force, "Displacement": Displacement}[this.value](element.start, element.strength, element.t_start, element.t_end);
+        sim.external[0] = element2;
+        sim.updateDrawOffsets();
         updateSystem();
     }
 
@@ -282,9 +294,9 @@
         display.setPoints(sim.points, sim);
         slider.setValue(0);
         plot.setXlim(0, sim.times[sim.times.length-1]);
-        plot.setYlim(d3.min(sim.data), d3.max(sim.data));
-        plot.setData([{x: sim.times, y: sim.data}], ["displacement"])
-        plot.setCursor(sim.times[0], sim.data[0]);
+        plot.setYlim(d3.min([d3.min(sim.data), d3.min(sim.dataF)]), d3.max([d3.max(sim.data), d3.max(sim.dataF)]));
+        plot.setData([{x: sim.times, y: sim.data}, {x: sim.times, y:sim.dataF}], ["displacement", "force"])
+        plot.setCursor([[sim.times[0], sim.data[0]], [sim.times[0], sim.dataF[0]]]);
     }
 
     slider.setRange(0, sim.end_time/sim.h-1);
@@ -292,7 +304,7 @@
         d = parseInt(d);
         display.setData(sim.draw(d));
         display.setPoints(sim.get_points(d), sim);
-        plot.setCursor(sim.times[d], sim.data[d]);
+        plot.setCursor([[sim.times[d], sim.data[d]], [sim.times[d], sim.dataF[d]]]);
     };
 </script>
 </body>

@@ -167,10 +167,36 @@ class Force {
         return {rect:rect, lines:lines};
     }
 
-    eval(t) {
+    eval(t, p, p0) {
         let F = [0];
         if(this.t_start <= t && t < this.t_end)
             F = [this.strength];
+        let Fx = [[0]];
+        let Fy = [[0]];
+        return [F, Fx, Fy]
+    }
+}
+
+class Displacement {
+    constructor(start, strength, t_start, t_end) {
+        this.start = start;
+        this.strength = strength;
+        this.t_start = t_start;
+        this.t_end = t_end;
+        this.target_ids = [this.start]
+    }
+    init(points) {}
+
+    draw(points, t) {
+        return {rect: {x:0,y:0,width:0, height: 0}, lines: []};
+    }
+
+    eval(t, p, p0) {
+        let F = [0];
+        if(this.t_start <= t && t < this.t_end)
+            p[this.start] = p0[this.start][1] + this.strength;
+        else
+            p[this.start] = p0[this.start][1];
         let Fx = [[0]];
         let Fy = [[0]];
         return [F, Fx, Fy]
@@ -230,7 +256,7 @@ class System {
             new Force(1, 1, 1, 3)
         ];
         this.end_time = 10;
-        this.h = 0.1;
+        this.h = 0.01;
 
         this.plot_point = 1;
     }
@@ -308,8 +334,13 @@ class System {
         }
         this.external[0].start = this.plot_point;
         this.external[0].target_ids[0] = this.plot_point;
+        if(this.external[0].constructor.name == "Force")
+            this.points[this.plot_point][0] = 1;
+        else
+            this.points[this.plot_point][0] = 0;
 
         this.points_trajectory = [];
+        this.points_force_trajectory = [];
         this.times = [0];
 
         let N = this.points.length;
@@ -317,14 +348,17 @@ class System {
         let free = [];
         let fixed = []
         let p = [];
+        let f = [];
         let p_old = []
         for(let point of this.points) {
             p.push(point[1]);
+            f.push(0)
             p_old.push(point[1]);
             free.push(point[0]);
             fixed.push(1-point[0]);
         }
         this.points_trajectory.push(p);
+        this.points_force_trajectory.push(f);
         for(let t = this.h; t < this.end_time; t += this.h) {
             for(let i = 0; i < N; i++)
                 p_old[i] = p[i];
@@ -335,7 +369,7 @@ class System {
 
             for(let group of [this.elements, this.external]) {
                 for (let element of group) {
-                    let [F_node, Fx_node, Fv_node] = element.eval(t);
+                    let [F_node, Fx_node, Fv_node] = element.eval(t, p, this.points);
                     for (let i in element.target_ids) {
                         F[element.target_ids[i]] += F_node[i];
                         for (let j in element.target_ids) {
@@ -355,19 +389,29 @@ class System {
             }
             let Fxv_inv = math.inv(Fxv);
 
-            let Fv_p = mul(Fv, p_old, free);
+            let Fv_p = math.multiply(Fv, p_old);
 
-            let Fx_p = mul(Fx, p, fixed);
+            let Fx_p = mul(math.add(Fx, Fv), p, fixed);
             let right = math.subtract(math.subtract(Fv_p, Fx_p), F);
             let x = math.multiply(Fxv_inv, right);
 
             let p2 = [];
-            for(let i = 0; i < N; i++)
+            let f2 = [];
+            for(let i = 0; i < N; i++) {
                 p2.push(free[i] ? x[i] : p[i])
+                f2.push(free[i] ? 0 : x[i])
+            }
             p = p2;
+            f = f2;
+            if(this.points[this.plot_point][0] == 1) {
+                let [F_node, Fx_node, Fv_node] = this.external[0].eval(t, p, this.points);
+                f2[this.plot_point] = F_node[0];
+            }
             this.points_trajectory.push(p);
+            this.points_force_trajectory.push(f);
             this.times.push(t);
         }
-        this.data = this.points_trajectory.map(x=>x[this.plot_point]);
+        this.data = this.points_trajectory.map(x=>x[this.plot_point]-this.points[this.plot_point][1]);
+        this.dataF = this.points_force_trajectory.map(x=>x[this.plot_point]);
     }
 }

@@ -197,13 +197,19 @@ class Plot {
         if(this.legend_group)
             this.update_legend(labels);
     }
-    setCursor(x, y) {
+    setCursor(data) {
         if(this.cursor === undefined) {
-            this.cursor = this.selection.append("circle");
-            this.cursor.attr("fill", this.color).attr("r", "5px");
+            this.cursor = this.selection.append("g");
+            //append("circle");
+            //this.cursor.attr("fill", this.color).attr("r", "5px");
         }
-        this.cursor.attr("cx", this.x_scale(x))
-        this.cursor.attr("cy", this.y_scale(y))
+        console.log(data);
+        let circle = this.cursor.selectAll("circle").data(data);
+        circle.enter().append("circle")
+            .attr("fill", this.color).attr("r", "5px")
+            .merge(circle)
+            .attr("cx", d => this.x_scale(d[0]))
+            .attr("cy", d => this.y_scale(d[1]))
     }
 }
 
