@@ -253,9 +253,10 @@ class System {
         ];
         this.external =
         [
-            new Force(1, 1, 1, 3)
+            new Force(1, 1, 0, 1)
         ];
-        this.end_time = 10;
+        this.start_time = -1;
+        this.end_time = 5;
         this.h = 0.01;
 
         this.plot_point = 1;
@@ -341,7 +342,7 @@ class System {
 
         this.points_trajectory = [];
         this.points_force_trajectory = [];
-        this.times = [0];
+        this.times = [this.start_time];
 
         let N = this.points.length;
 
@@ -359,7 +360,7 @@ class System {
         }
         this.points_trajectory.push(p);
         this.points_force_trajectory.push(f);
-        for(let t = this.h; t < this.end_time; t += this.h) {
+        for(let t = this.start_time+this.h; t < this.end_time; t += this.h) {
             for(let i = 0; i < N; i++)
                 p_old[i] = p[i];
 

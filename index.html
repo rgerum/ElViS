@@ -13,7 +13,7 @@
     <style>
         .button {
             display: inline-block;
-            background: #9473c6;
+            #background: #9473c6;
             border: 1px solid #fff;
             padding: 5px 10px;
             border-radius: 10px;
@@ -24,6 +24,7 @@
             filter: saturate(0.5);
         }
         .button:hover {
+            background: #aba2c1;
             filter: saturate(1) brightness(1.1);
             color: black;
         }
@@ -146,7 +147,12 @@
 </head>
 <body>
 <div style="width:600px; margin:0 auto">
+    <h1>ElViS-Simulator</h1>
+
+    <h2>Examples</h2>
     <div id="buttons"></div>
+
+    <h2>Force/Displacement</h2>
     <select id="type_external">
         <option value="Force" selected>Force</option>
         <option value="Displacement">Displacement</option>
@@ -158,11 +164,14 @@
     end:
     <input id="force_end" type="number" value="3" min="0"/>
 
+    <h2>Element properties</h2>
     <select id="type" disabled>
         <option value="Spring">Spring</option>
         <option value="Dashpot">Dashpot</option>
     </select>
     <input id="input_number" type="number" value="1" min="0" disabled/>
+
+    <h2>System</h2>
     <svg id="display"></svg>
     <svg id="plot"></svg>
     <svg id="slider" width="500" height="30"></svg>
@@ -174,13 +183,13 @@
             data = {
                 "plot_point": 1,
                 "points": [[0, 0], [1, 1]],
-                "elements": [["Dashpot", 0, 1, 1]],
+                "elements": [["Spring", 0, 1, 1, 1]],
             }
         else if(i == 1)
             data = {
                 "plot_point": 1,
                 "points": [[0, 0], [1, 1]],
-                "elements": [["Spring", 0, 1, 1, 1], ["Spring", 0, 1, 1, 1]],
+                "elements": [["Dashpot", 0, 1, 1]],
             }
         else if(i == 2)
             data = {
@@ -190,21 +199,35 @@
             }
         else if(i == 3)
             data = {
-                "plot_point": 2,
-                "points": [[0, 0], [1, 1], [1, 2]],
-                "elements": [["Spring", 0, 1, 1, 1], ["Dashpot", 1, 2, 1], ["Spring", 1, 2, 1, 1]],
+                "plot_point": 1,
+                "points": [[0, 0], [1, 1]],
+                "elements": [["Dashpot", 0, 1, 1], ["Spring", 0, 1, 1, 1]],
             }
         else if(i == 4)
             data = {
                 "plot_point": 2,
                 "points": [[0, 0], [1, 1], [1, 2]],
-                "elements": [["Dashpot", 0, 1, 1], ["Dashpot", 1, 2, 1], ["Spring", 1, 2, 1, 1]],
+                "elements": [["Spring", 0, 1, 1, 1], ["Dashpot", 1, 2, 1], ["Spring", 1, 2, 1, 1]],
             }
         return data;
     }
 
+    function generateImageFromData(svg, data) {
+        let sim = new System();
+        sim.setData(data);
+        sim.updateDrawOffsets();
+        let scale = 3;
+        let display = new Display(svg, {width: 30*scale, height: 8*scale, xlim:[-0.4, 2.4], interactive:false});
+        display.setData(sim.draw());
+        display.setPoints(sim.points, sim);
+    }
+
     d3.select("#buttons").selectAll("div").data([0, 1, 2, 3, 4]).enter().append("div")
-        .text(d=>d).attr("class", "button").on("click", d=>setData(getDataPreset(d)));
+        .attr("class", "button").on("click", d=>setData(getDataPreset(d)))
+    .each(function(d, i) {
+        let svg = d3.select(this).append("svg").attr("width", 300).attr("height", 20);
+        generateImageFromData(svg, getDataPreset(d));
+    })
 
     let plot = new Plot(d3.select("#plot"), {xlabel: "time", ylabel: "displacement", left: 100, bottom: 100});
     plot.setXLabel("time")
@@ -221,7 +244,7 @@
             slider.setValue(slider.value() + slider.step)
     }
 
-    plot.setXlim(0, sim.times[sim.times.length-1]);
+    plot.setXlim(sim.times[0], sim.times[sim.times.length-1]);
     plot.setYlim(d3.min(sim.data), d3.max(sim.data));
     //let data2 = [];
     //for(let i = 0; i < data.length; i++)
@@ -300,7 +323,7 @@
         display.setData(sim.draw());
         display.setPoints(sim.points, sim);
         slider.setValue(0);
-        plot.setXlim(0, sim.times[sim.times.length-1]);
+        plot.setXlim(sim.times[0], sim.times[sim.times.length-1]);
         plot.setYlim(d3.min([d3.min(sim.data), d3.min(sim.dataF)]), d3.max([d3.max(sim.data), d3.max(sim.dataF)]));
         plot.setData([{x: sim.times, y: sim.data}, {x: sim.times, y:sim.dataF}], ["displacement", "force"])
         plot.setCursor([[sim.times[0], sim.data[0]], [sim.times[0], sim.dataF[0]]]);

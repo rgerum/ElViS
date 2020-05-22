@@ -33,7 +33,7 @@ class MySim:
         self.all_points = []
         self.elements = []
 
-        if 1: # Maxwell
+        if 0: # Maxwell
             # add initial points
             self.add_point(POINT_static, 0, 0)
             self.add_point(POINT_dynamic, 1, 0)
@@ -57,12 +57,12 @@ class MySim:
             self.add_element(Dashpot(0, 1, strength=1))
             self.add_element(Spring(1, 2, rest=1, strength=1))
             self.add_element(Force(2, strength=1, t_start=1, t_end=3))
-        elif 0:
-            self.add_point(POINT_static, 1, 0)
-            self.add_point(POINT_dynamic, 2, 0)
+        elif 1:
+            self.add_point(POINT_static, 0, 0)
+            self.add_point(POINT_dynamic, 1, 0)
 
             # add initial elements
-            self.add_element(Spring(1, 0, rest=-1, strength=1, drawoffset=0))
+            self.add_element(Spring(0, 1, rest=-1, strength=1))
             self.add_element(Force(1, strength=1, t_start=1, t_end=3))
         else:  # Kelvin Voigt
             # add initial points
@@ -204,6 +204,10 @@ class MySim:
 
             # divide Fv by Delta t
             Fv /= (t-t_old)
+
+            print(F)
+            print(Fx)
+            print(Fv)
 
             # combine the matrix to be inverted
             Fxv = Fx + Fv

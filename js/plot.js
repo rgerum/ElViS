@@ -214,11 +214,12 @@ class Plot {
 }
 
 class Display {
-    constructor(selection, {width = 640, height = 150, innerwidth=undefined, innerheight=undefined, top = 0, right = 0, bottom = 0, left = 0, xlabel="", ylabel= "", colors=undefined}={}) {
+    constructor(selection, {width = 640, height = 150, xlim= [-1, 5], innerwidth=undefined, innerheight=undefined, top = 0, right = 0, bottom = 0, left = 0, xlabel="", ylabel= "", colors=undefined, interactive=true}={}) {
         this.width = width;
         this.height = height;
         this.xlabel = xlabel;
         this.ylabel = ylabel;
+        this.interactive = interactive;
         var svg, draw_line = undefined;
         this.selection = selection;
         var margin = {top: top, right: right, bottom: bottom, left: left};
@@ -238,7 +239,7 @@ class Display {
 
         this.scale = d3.scaleLinear()
             .range([0, innerwidth])
-            .domain([-1, 5])
+            .domain(xlim)
 
         this.line_group = this.selection.append("g").attr("class", "elements")
         this.point_group = this.selection.append("g").attr("class", "points")
@@ -284,31 +285,38 @@ class Display {
 
         let display = this;
 
-        let paths_enter = paths.enter().append("g")
+        paths.enter().append("g")
             .attr("class", "element")
 
             .call(d3.drag().on("drag", function() {
 
                 })
             )
-        paths_enter.merge(paths)
+            .merge(paths)
             .each(function(d, i) {
                 let p = d3.select(this).selectAll("path").data(d.lines)
                 p.enter().append("path")
                     .merge(p)
                     .attr("d", line).attr("fill", "none").attr("stroke", "darkgreen")
                 p.exit().remove();
-                let r = d3.select(this).selectAll("rect").data([d.rect])
-                r.enter().append("rect")
-                    .attr("fill", "transparent")
-                    .style("opacity", 0.5)
-                    .on("mouseover", function() { d3.select(this.parentElement).attr("stroke-width", 3);})
-                    .on("mouseout", function() { d3.select(this.parentElement).attr("stroke-width", 1);})
-                    .on("click", function(d) { selectedElement(i);} )
-                    .merge(r)
-                    .attr("x", d=>display.scale(d.x)).attr("width", d=>display.scale(d.x+d.width)-display.scale(d.x))
-                    .attr("y", d=>display.scale(d.y)).attr("height", d=>display.scale(d.y+d.height)-display.scale(d.y))
-
+                if(this.interactive) {
+                    let r = d3.select(this).selectAll("rect").data([d.rect])
+                    r.enter().append("rect")
+                        .attr("fill", "transparent")
+                        .style("opacity", 0.5)
+                        .on("mouseover", function () {
+                            d3.select(this.parentElement).attr("stroke-width", 3);
+                        })
+                        .on("mouseout", function () {
+                            d3.select(this.parentElement).attr("stroke-width", 1);
+                        })
+                        .on("click", function (d) {
+                            selectedElement(i);
+                        })
+                        .merge(r)
+                        .attr("x", d=>display.scale(d.x)).attr("width", d=>display.scale(d.x+d.width)-display.scale(d.x))
+                        .attr("y", d=>display.scale(d.y)).attr("height", d=>display.scale(d.y+d.height)-display.scale(d.y))
+                }
             })
         paths.exit().remove();
     }
@@ -319,22 +327,30 @@ class Display {
 
         let display = this;
 
-        paths.enter().append("circle")
+        let paths_enter = paths.enter().append("circle")
             .attr("class", "point")
             .attr("r", "5px")
-            .on("mouseover", function() { d3.select(this).attr("r", "8px");})
-            .on("mouseout", function() { d3.select(this).attr("r", "5px");})
-            .call(d3.drag()
-                .on("drag", function(d, i) {
-                    sim.points[i][1] = display.scale.invert(d3.event.x);
-                    display.setData(sim.draw());
-                    display.setPoints(sim.get_points(), sim);
-                    console.log(display.scale.invert(d3.event.x));
+        if(this.interactive) {
+            paths_enter
+                .on("mouseover", function () {
+                    d3.select(this).attr("r", "8px");
                 })
-                .on("end", function(d, i) {
-                    updateSystem();
+                .on("mouseout", function () {
+                    d3.select(this).attr("r", "5px");
                 })
-            )
+                .call(d3.drag()
+                    .on("drag", function (d, i) {
+                        sim.points[i][1] = display.scale.invert(d3.event.x);
+                        display.setData(sim.draw());
+                        display.setPoints(sim.get_points(), sim);
+                        console.log(display.scale.invert(d3.event.x));
+                    })
+                    .on("end", function (d, i) {
+                        updateSystem();
+                    })
+                )
+        }
+        paths_enter
             .merge(paths)
             .attr("cx", d => this.scale(d[1]))
             .attr("cy", d => this.scale(0))
