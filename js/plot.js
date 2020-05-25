@@ -157,7 +157,6 @@ class Plot {
                         obj.attr("visibility", new_vis ? "visible" : "hidden");
 
                         mouseout();
-                        console.log(d3.select(self.legend_group.selectAll("g").nodes()[i]).select("line").node());
                         d3.select(self.legend_group.selectAll("g").nodes()[i]).select("line").attr("filter", new_vis ? "saturate(1)" : "saturate(0) brightness(1.2)")
                         //(new_vis ? mousemover : mouseout)();
                     })
@@ -203,7 +202,6 @@ class Plot {
             //append("circle");
             //this.cursor.attr("fill", this.color).attr("r", "5px");
         }
-        console.log(data);
         let circle = this.cursor.selectAll("circle").data(data);
         circle.enter().append("circle")
             .attr("fill", this.color).attr("r", "5px")
@@ -285,30 +283,31 @@ class Display {
 
         let display = this;
 
-        paths.enter().append("g")
-            .attr("class", "element")
+        let paths_enter = paths.enter()
+            .append("g")
+            .attr("class", "element");
+        paths_enter.append("g").attr("class", "element_draw");
+        paths_enter.append("g").attr("class", "element_select");
 
-            .call(d3.drag().on("drag", function() {
-
-                })
-            )
-            .merge(paths)
+        paths_enter.merge(paths)
             .each(function(d, i) {
-                let p = d3.select(this).selectAll("path").data(d.lines)
+                let p = d3.select(this).select(".element_draw").selectAll("path").data(d.lines)
                 p.enter().append("path")
                     .merge(p)
                     .attr("d", line).attr("fill", "none").attr("stroke", "darkgreen")
                 p.exit().remove();
-                if(this.interactive) {
-                    let r = d3.select(this).selectAll("rect").data([d.rect])
+                if(display.interactive) {
+                    let r = d3.select(this).select(".element_select").selectAll("rect").data([d.rect])
                     r.enter().append("rect")
                         .attr("fill", "transparent")
                         .style("opacity", 0.5)
                         .on("mouseover", function () {
-                            d3.select(this.parentElement).attr("stroke-width", 3);
+                            d3.select(this.parentElement.parentElement).select(".element_draw")
+                                .attr("stroke-width", 3);
                         })
                         .on("mouseout", function () {
-                            d3.select(this.parentElement).attr("stroke-width", 1);
+                            d3.select(this.parentElement.parentElement).select(".element_draw")
+                                .attr("stroke-width", 1);
                         })
                         .on("click", function (d) {
                             selectedElement(i);
@@ -343,7 +342,6 @@ class Display {
                         sim.points[i][1] = display.scale.invert(d3.event.x);
                         display.setData(sim.draw());
                         display.setPoints(sim.get_points(), sim);
-                        console.log(display.scale.invert(d3.event.x));
                     })
                     .on("end", function (d, i) {
                         updateSystem();
