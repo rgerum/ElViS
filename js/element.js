@@ -34,6 +34,8 @@ class Spring {
         pos.push(math.add(start, math.multiply(norm, this.drawoffset)))
         pos.push(math.add(start, math.multiply(tang, start_dist), math.multiply(norm, this.drawoffset)))
         let rect = {x: start[0], width:math.norm(dist), y: this.drawoffset-0.2, height: 0.4};
+        let rect_start = {x: start[0], width:start_dist, y: this.drawoffset-0.2, height: 0.4};
+        let rect_end = {x: end[0]-end_dist, width:end_dist, y: this.drawoffset-0.2, height: 0.4};
 
         // the count of the coil
         let count = parseInt(Math.abs(this.rest) / 0.1)
@@ -55,7 +57,7 @@ class Spring {
         pos.push(end);
         // plot the spring
         //subplot.plot(pos[:, 0], pos[:, 1], 'g-')
-        return {rect:rect, lines: [pos]};
+        return {rect:rect, rect_start: rect_start, rect_end: rect_end, lines: [pos]};
     }
 
     eval(t) {
@@ -101,6 +103,8 @@ class Dashpot {
         let pos = [start]
         pos.push(math.add(start, math.multiply(norm, this.drawoffset)))
         let rect = {x: start[0], width:math.norm(dist), y: this.drawoffset-0.2, height: 0.4};
+        let rect_start = {x: start[0], width:start_dist, y: this.drawoffset-0.2, height: 0.4};
+        let rect_end = {x: end[0]-end_dist, width:end_dist, y: this.drawoffset-0.2, height: 0.4};
 
         // iterate over both parts of the sheath
         if(this.strength != 0) {
@@ -121,7 +125,7 @@ class Dashpot {
         pos.push(math.add(end, math.multiply(norm, this.drawoffset)))
         pos.push(end);
         lines.push(pos);
-        return {rect: rect, lines:lines};
+        return {rect:rect, rect_start: rect_start, rect_end: rect_end, lines: lines};
     }
 
     eval(t) {
@@ -277,15 +281,69 @@ class System {
 
     updateDrawOffsets() {
         let element_count = zeros(this.points.length);
+        let element_index = zeros(this.elements.length);
+
         for(let element of this.elements) {
-            let point = d3.min(element.target_ids);
-            element.drawoffset = element_count[point] / 2;
-            element_count[point] += 1;
+            let max = 0;
+            for(let j=element.target_ids[0]; j < element.target_ids[1]; j++)
+            {
+                if(element_count[j] > max)
+                    max = element_count[j];
+            }
+            for(let j=element.target_ids[0]; j < element.target_ids[1]; j++)
+            {
+                element_count[j] += 1;
+            }
+            element.drawoffset = max / 2 / 2;
         }
         for(let element of this.elements) {
-            let point = d3.min(element.target_ids);
-            element.drawoffset -= (element_count[point] - 1) / 4;
+            let max = 0;
+            for(let j=element.target_ids[0]; j < element.target_ids[1]; j++)
+            {
+                if(element_count[j] > max)
+                    max = element_count[j];
+            }
+            element.drawoffset -= (max - 1) / 4 / 2;
         }
+    }
+
+    insertPoint(i) {
+        this.points.splice(i, 0, [1, i, 0]);
+
+        for(let element of this.elements) {
+            for(let j in element.target_ids)
+                if(element.target_ids[j] >= i)
+                    element.target_ids[j] += 1;
+        }
+        if(this.plot_point >= i)
+            this.plot_point += 1;
+        for(let i in this.points)
+            this.points[i][1] = i;
+    }
+
+    removeUnusedPoints() {
+        let usage_count = [];
+        for(let i in this.points)
+            usage_count.push(0);
+        for(let element of this.elements) {
+            for(let j in element.target_ids)
+                usage_count[element.target_ids[j]] += 1;
+        }
+        for(let i = this.points.length-1; i >= 0; i--) {
+            if(usage_count[i] == 0) {
+                this.points.splice(i, 1);
+                for(let element of this.elements) {
+                    for(let j in element.target_ids)
+                        if(element.target_ids[j] >= i)
+                            element.target_ids[j] -= 1;
+                }
+                if(this.plot_point >= i)
+                    this.plot_point -= 1;
+            }
+        }
+        for(let i in this.points)
+            this.points[i][1] = i;
+        this.plot_point = this.points.length - 1;
     }
 
     get_points(i) {
