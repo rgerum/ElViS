@@ -1,10 +1,8 @@
 class Spring {
     constructor(start, end, strength, rest) {
-        this.start = start;
-        this.end = end;
         this.strength = strength;
         this.rest = rest;
-        this.target_ids = [this.start, this.end];
+        this.target_ids = [start, end];
 
         this.drawoffset = 0;
     }
@@ -22,8 +20,7 @@ class Spring {
         // difference vector
         let dist = math.subtract(end, start);
         // ignore 0 elements
-        if(math.norm(dist) === 0)
-            return "x";
+        //if(math.norm(dist) === 0)
         // normalized normal vector
         let norm = math.divide([-dist[1], dist[0]], math.norm(dist))
         let tang = math.divide(dist, math.norm(dist))
@@ -61,7 +58,7 @@ class Spring {
     }
 
     eval(t) {
-        if(this.start == this.end)
+        if(this.target_ids[0] == this.target_ids[1])
             return [ [0], [[0,0],[0,0]], [[0,0],[0,0]]]
         let F = [-this.rest*this.strength, this.rest*this.strength]
         let Fx = [[-this.strength, this.strength], [this.strength, -this.strength]]
@@ -72,11 +69,9 @@ class Spring {
 
 class Dashpot {
     constructor(start, end, strength, rest) {
-        this.start = start;
-        this.end = end;
         this.strength = strength;
         this.rest = rest;
-        this.target_ids = [this.start, this.end];
+        this.target_ids = [start, end];
         this.drawoffset = 0;
     }
     init(points) {
@@ -129,7 +124,7 @@ class Dashpot {
     }
 
     eval(t) {
-        if(this.start == this.end)
+        if(this.target_ids[0] == this.target_ids[1])
             return [[0, 0], [[0,0],[0,0]], [[0,0],[0,0]]]
         let F = [0, 0]
         let Fx = [[0, 0], [0, 0]]
@@ -140,11 +135,10 @@ class Dashpot {
 
 class Force {
     constructor(start, strength, t_start, t_end) {
-        this.start = start;
         this.strength = strength;
         this.t_start = t_start;
         this.t_end = t_end;
-        this.target_ids = [this.start]
+        this.target_ids = [start]
     }
     init(points) {}
 
@@ -183,11 +177,10 @@ class Force {
 
 class Displacement {
     constructor(start, strength, t_start, t_end) {
-        this.start = start;
         this.strength = strength;
         this.t_start = t_start;
         this.t_end = t_end;
-        this.target_ids = [this.start]
+        this.target_ids = [start]
     }
     init(points) {}
 
@@ -198,9 +191,9 @@ class Displacement {
     eval(t, p, p0) {
         let F = [0];
         if(this.t_start <= t && t < this.t_end)
-            p[this.start] = p0[this.start][1] + this.strength;
+            p[this.target_ids[0]] = p0[this.target_ids[0]][1] + this.strength;
         else
-            p[this.start] = p0[this.start][1];
+            p[this.target_ids[0]] = p0[this.target_ids[0]][1];
         let Fx = [[0]];
         let Fy = [[0]];
         return [F, Fx, Fy]
@@ -253,7 +246,6 @@ class System {
         this.elements =
         [
             new Spring(0, 1, 1, 1),
-            new Dashpot(0, 1, 1),
         ];
         this.external =
         [
@@ -294,7 +286,7 @@ class System {
             {
                 element_count[j] += 1;
             }
-            element.drawoffset = max / 2 / 2;
+            element.drawoffset = max / 2;
         }
         for(let element of this.elements) {
             let max = 0;
@@ -303,7 +295,7 @@ class System {
                 if(element_count[j] > max)
                     max = element_count[j];
             }
-            element.drawoffset -= (max - 1) / 4 / 2;
+            element.drawoffset -= (max - 1) / 4;
         }
     }
 
@@ -342,7 +334,7 @@ class System {
             }
         }
         for(let i in this.points)
-            this.points[i][1] = i;
+            this.points[i][1] = 1*i;
         this.plot_point = this.points.length - 1;
     }
 
@@ -391,7 +383,6 @@ class System {
             }
             element.init(p);
         }
-        this.external[0].start = this.plot_point;
         this.external[0].target_ids[0] = this.plot_point;
         if(this.external[0].constructor.name == "Force")
             this.points[this.plot_point][0] = 1;

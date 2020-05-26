@@ -212,7 +212,7 @@ class Plot {
 }
 
 class Display {
-    constructor(selection, {width = 640, height = 150, xlim= [-1, 5], innerwidth=undefined, innerheight=undefined, top = 0, right = 0, bottom = 0, left = 0, xlabel="", ylabel= "", colors=undefined, interactive=true}={}) {
+    constructor(selection, {width = 640, height = 250, xlim= [-1, 5], innerwidth=undefined, innerheight=undefined, top = 0, right = 0, bottom = 0, left = 0, xlabel="", ylabel= "", colors=undefined, interactive=true}={}) {
         this.width = width;
         this.height = height;
         this.xlabel = xlabel;
@@ -241,6 +241,8 @@ class Display {
 
         this.line_group = this.selection.append("g").attr("class", "elements")
         this.point_group = this.selection.append("g").attr("class", "points")
+        this.new_point = this.selection.append("circle").attr("r", "0px")
+            .attr("fill", "blue").attr("opacity", 0.5)
     }
 
     setXlim(min, max) {
@@ -320,45 +322,46 @@ class Display {
                                 let data = undefined;
                                 if(ii == 2) {
                                     x = x - d.x1 + sim.points[sim.elements[i].target_ids[1]][1];
-                                    y = 0;//y - d.y1;
+                                    y = y - d.y1;
                                     data = sim.elements[i].draw([[sim.points[sim.elements[i].target_ids[0]][1], 0], [x, y]]);
                                 }
                                 if(ii == 1) {
                                     x = x - d.x1 + sim.points[sim.elements[i].target_ids[0]][1];
-                                    y = 0;//y - d.y1;
+                                    y = y - d.y1;
                                     data = sim.elements[i].draw([[x, y], [sim.points[sim.elements[i].target_ids[1]][1], 0]]);
                                 }
-                                console.log("x, y", x, y)
                                 d3.select(this.parentElement.parentElement).select(".element_draw").selectAll("path").data(data.lines)
                                     .attr("d", line).attr("fill", "none").attr("stroke", "red")
                                 if(Math.abs(Math.round(x*2)/2 - x) < 0.1) {
                                     this.target_point = Math.round(x * 2) / 2;
                                     let new_point = Math.round(x * 2) / 2;
-                                    console.log("new point", Math.round(x * 2) / 2);
+                                    //console.log("new point", Math.round(x * 2) / 2);
                                     display.point_group.selectAll(".point")
-                                        .attr("r", (d, i) => i == new_point ? "8px" : "5px");
+                                        .attr("r", (d, i) => i === new_point ? "8px" : "5px");
+                                    if(this.target_point % 1 === 0.5) {
+                                        display.new_point
+                                            .attr("cx", display.scale(this.target_point))
+                                            .attr("cy", display.scale(0))
+                                            .attr("r", "8px")
+                                    }
+                                    else
+                                        display.new_point.attr("r", 0)
                                 }
                             })
                             .on('start',function (d, ii) {
                                 if(ii == 0)
                                     return
                                 this.target_point = undefined;
-                                console.log("start", d, i);
-                                console.log(d3.event.x, d3.event.y, d3.select(this).attr("width"));
                                 let x = display.scale.invert(d3.event.x), y = display.scale.invert(d3.event.y);
-                                if (d.x1){
-                                    d.x1 =  x - d.xt;
-                                    d.y1 =  y - d.yt;
-                                }else{
-                                    d.x1 = x;
-                                    d.y1 = y;
-                                }
+                                d.x1 = x;
+                                d.y1 = y;
+                                console.log("->", d.x1, d.y1);
                             })
                             .on("end", function (d, ii) {
                                 if(ii == 0)
                                     return
+
                                 if(this.target_point !== undefined) {
-                                    console.log("end", sim.points.length,this.target_point);
                                     if(this.target_point % 1 == 0.5) {
                                         this.target_point = Math.ceil(this.target_point);
                                         sim.insertPoint(this.target_point);
@@ -378,6 +381,7 @@ class Display {
                                         }
                                     }
                                 }
+                                display.new_point.attr("r", 0);
                                 display.point_group.selectAll(".point").attr("r", "5px");
                                 sim.removeUnusedPoints();
                                 sim.updateDrawOffsets();
@@ -398,6 +402,8 @@ class Display {
         var paths = this.point_group.selectAll(".point")
             .data(dataset)
 
+        var line = d3.line().x(d => this.scale(d[0])).y(d => this.scale(d[1]));
+
         let display = this;
 
         let paths_enter = paths.enter().append("circle")
@@ -411,6 +417,7 @@ class Display {
                 .on("mouseout", function () {
                     d3.select(this).attr("r", "5px");
                 })
+                /*
                 .call(d3.drag()
                     .on("drag", function (d, i) {
                         console.log();
@@ -419,6 +426,90 @@ class Display {
                         display.setPoints(sim.get_points(), sim);
                     })
                     .on("end", function (d, i) {
+                        updateSystem();
+                    })
+                )*/
+                .call(d3.drag()
+                    .on("drag", function (d, iii) {
+                        let ii = 2;
+                        let i = d.i;
+                        let self = display.line_group.selectAll(".element_select").nodes()[i];
+                        console.log("self", self);
+                        if(ii == 0)
+                            return
+                        let x = display.scale.invert(d3.event.x), y = display.scale.invert(d3.event.y);
+                        let data = undefined;
+                        if(ii == 2) {
+                            x = x - d.x1 + sim.points[sim.elements[i].target_ids[1]][1];
+                            y = y - d.y1;
+                            data = sim.elements[i].draw([[sim.points[sim.elements[i].target_ids[0]][1], 0], [x, y]]);
+                        }
+                        if(ii == 1) {
+                            x = x - d.x1 + sim.points[sim.elements[i].target_ids[0]][1];
+                            y = y - d.y1;
+                            data = sim.elements[i].draw([[x, y], [sim.points[sim.elements[i].target_ids[1]][1], 0]]);
+                        }
+                        d3.select(self.parentElement).select(".element_draw").selectAll("path").data(data.lines)
+                            .attr("d", line).attr("fill", "none").attr("stroke", "red")
+                        if(Math.abs(Math.round(x*2)/2 - x) < 0.1) {
+                            this.target_point = Math.round(x * 2) / 2;
+                            let new_point = Math.round(x * 2) / 2;
+                            //console.log("new point", Math.round(x * 2) / 2);
+                            display.point_group.selectAll(".point")
+                                .attr("r", (d, i) => i === new_point ? "8px" : "5px");
+                            if(this.target_point % 1 === 0.5) {
+                                display.new_point
+                                    .attr("cx", display.scale(this.target_point))
+                                    .attr("cy", display.scale(0))
+                                    .attr("r", "8px")
+                            }
+                            else
+                                display.new_point.attr("r", 0)
+                        }
+                    })
+                    .on('start',function (d, i) {
+                        console.log("drag point", d, i, this);
+                        sim.elements.push(new Spring(i, i, 1, 1));
+                        display.setData(sim.draw());
+                        this.target_point = undefined;
+                        let x = display.scale.invert(d3.event.x), y = display.scale.invert(d3.event.y);
+                        d.x1 = x;
+                        d.y1 = y;
+                        d.i = sim.elements.length - 1;
+                        console.log("->", d.x1, d.y1, d.i);
+                    })
+                    .on("end", function (d, iii) {
+                        let ii = 2;
+                        let i = d.i;
+                        if(ii == 0)
+                            return
+
+                        if(this.target_point !== undefined) {
+                            if(this.target_point % 1 == 0.5) {
+                                this.target_point = Math.ceil(this.target_point);
+                                sim.insertPoint(this.target_point);
+                            }
+                            if(this.target_point % 1 == 0) {
+                                if (sim.points.length > this.target_point) {
+                                    if (ii == 2) {
+                                        sim.elements[i].target_ids[1] = this.target_point;
+                                    } else if (ii == 1) {
+                                        sim.elements[i].target_ids[0] = this.target_point;
+                                    }
+                                    if (sim.elements[i].target_ids[1] < sim.elements[i].target_ids[0]) {
+                                        let [s, e] = sim.elements[i].target_ids;
+                                        sim.elements[i].target_ids = [e, s];
+                                    }
+                                    console.log("new targets", sim.elements[i].target_ids);
+                                }
+                            }
+                        }
+                        display.new_point.attr("r", 0);
+                        display.point_group.selectAll(".point").attr("r", "5px");
+                        sim.removeUnusedPoints();
+                        sim.updateDrawOffsets();
+                        display.setData(sim.draw());
+                        display.setPoints(sim.points, sim);
                         updateSystem();
                     })
                 )

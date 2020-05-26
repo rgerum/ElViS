@@ -303,7 +303,7 @@
     document.getElementById("type").oninput = function() {
         if(selected_element_id != undefined) {
             let element = sim.elements[selected_element_id]
-            let element2 = new {"Spring": Spring, "Dashpot": Dashpot}[this.value](element.start, element.end, element.strength);
+            let element2 = new {"Spring": Spring, "Dashpot": Dashpot}[this.value](element.target_ids[0], element.target_ids[1], element.strength);
             sim.elements[selected_element_id] = element2;
             sim.updateDrawOffsets();
             updateSystem();
