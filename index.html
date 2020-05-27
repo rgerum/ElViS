@@ -152,7 +152,7 @@
     <h2>Examples</h2>
     <div id="buttons"></div>
 
-    <h2>Force/Displacement</h2>
+    <h2>Input</h2>
     <select id="type_external">
         <option value="Force" selected>Force</option>
         <option value="Displacement">Displacement</option>
@@ -208,7 +208,7 @@
             data = {
                 "plot_point": 2,
                 "points": [[0, 0], [1, 1], [1, 2]],
-                "elements": [["Spring", 0, 1, 1, 1], ["Dashpot", 1, 2, 1], ["Spring", 1, 2, 1, 1]],
+                "elements": [["Spring", 0, 2, 1, 2], ["Dashpot", 0, 1, 1], ["Spring", 1, 2, 1, 1]],
             }
         return data;
     }
