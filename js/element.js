@@ -336,6 +336,12 @@ class System {
         for(let i in this.points)
             this.points[i][1] = 1*i;
         this.plot_point = this.points.length - 1;
+
+        // remove 0 length elements
+        for(let i = this.elements.length-1; i >= 0; i--) {
+            if(this.elements[i].target_ids[0] === this.elements[i].target_ids[1])
+                this.elements.splice(i, 1);
+        }
     }
 
     get_points(i) {
