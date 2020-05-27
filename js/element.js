@@ -165,7 +165,8 @@ class ForceGenerator {
         let start_dist1 = 0.1
         let end_dist1 = 0.1
 
-        let radius = 0.2
+        let radiusX = 0.2
+        let radiusY = 0.2
 
         // difference vector
         let dist = math.subtract(end, start);
@@ -173,9 +174,21 @@ class ForceGenerator {
         if(math.norm(dist) === 0)
             return
 
-        start_dist = (math.norm(dist)/2 - radius)
-        end_dist = (math.norm(dist)/2 - radius)
-        console.log(math.norm(dist), radius, start_dist)
+        start_dist = (math.norm(dist)/2 - radiusX)
+        end_dist = (math.norm(dist)/2 - radiusX)
+
+        if(start_dist < 0.2) {
+            if(math.norm(dist)/2 > 0.2) {
+                start_dist = 0.2;
+                end_dist = 0.2;
+                radiusX = math.norm(dist) / 2 - start_dist;
+            }
+            else {
+                start_dist = math.norm(dist)/2;
+                end_dist = math.norm(dist)/2;
+                radiusX = 0;
+            }
+        }
 
         // normalized normal vector
         let norm = math.divide([-dist[1], dist[0]], math.norm(dist))
@@ -201,7 +214,7 @@ class ForceGenerator {
         pos = []
         for(let i=0; i < 360; i++)
             pos.push(math.add(start, math.multiply(tan, math.norm(dist)/2), math.multiply(norm, this.drawoffset),
-            [-Math.cos(i/180*Math.PI)*radius, Math.sin(i/180*Math.PI)*radius]))
+            [-Math.cos(i/180*Math.PI)*radiusX, Math.sin(i/180*Math.PI)*radiusY]))
         lines.push(pos)
 
         pos = []
