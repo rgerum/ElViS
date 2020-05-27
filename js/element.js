@@ -14,7 +14,9 @@ class Spring {
 
     draw(points) {
         let start_dist = 0.2
+        let start_dist1 = 0.1
         let end_dist = 0.2
+        let end_dist1 = 0.1
 
         let [start, end] = points;
         // difference vector
@@ -27,8 +29,9 @@ class Spring {
 
         // pos with gather all points
         let pos = [start]
+        pos.push(math.add(start, math.multiply(tang, start_dist1)))
         // add the start point with offset
-        pos.push(math.add(start, math.multiply(norm, this.drawoffset)))
+        pos.push(math.add(start, math.multiply(tang, start_dist1), math.multiply(norm, this.drawoffset)))
         pos.push(math.add(start, math.multiply(tang, start_dist), math.multiply(norm, this.drawoffset)))
         let rect = {x: start[0], width:math.norm(dist), y: this.drawoffset-0.2, height: 0.4};
         let rect_start = {x: start[0], width:start_dist, y: this.drawoffset-0.2, height: 0.4};
@@ -50,7 +53,8 @@ class Spring {
         }
         pos.push(math.add(start, math.multiply(tang, math.norm(dist)-end_dist), math.multiply(norm, this.drawoffset)))
         // add the end point
-        pos.push(math.add(end, math.multiply(norm, this.drawoffset)));
+        pos.push(math.add(end, math.multiply(tang, -end_dist1), math.multiply(norm, this.drawoffset)));
+        pos.push(math.add(end, math.multiply(tang, -end_dist1)));
         pos.push(end);
         // plot the spring
         //subplot.plot(pos[:, 0], pos[:, 1], 'g-')
@@ -83,6 +87,10 @@ class Dashpot {
         let end_dist = 0.2
         let hole_dist = 0.4
 
+        let start_dist1 = 0.1
+        let end_dist1 = 0.1
+
+
         // difference vector
         let dist = math.subtract(end, start);
         // ignore 0 elements
@@ -96,7 +104,9 @@ class Dashpot {
         // start at the first position
         let lines = []
         let pos = [start]
-        pos.push(math.add(start, math.multiply(norm, this.drawoffset)))
+        pos.push(math.add(start, math.multiply(tan, start_dist1)))
+        // add the start point with offset
+        pos.push(math.add(start, math.multiply(tan, start_dist1), math.multiply(norm, this.drawoffset)))
         let rect = {x: start[0], width:math.norm(dist), y: this.drawoffset-0.2, height: 0.4};
         let rect_start = {x: start[0], width:start_dist, y: this.drawoffset-0.2, height: 0.4};
         let rect_end = {x: end[0]-end_dist, width:end_dist, y: this.drawoffset-0.2, height: 0.4};
@@ -117,7 +127,9 @@ class Dashpot {
         // the middle part of the damper
         pos.push(math.add(start, math.multiply(tan, hole_dist), math.multiply(norm, this.drawoffset)))
         pos.push(math.add(start, dist, math.multiply(tan, -start_dist), math.multiply(norm, this.drawoffset)))
-        pos.push(math.add(end, math.multiply(norm, this.drawoffset)))
+
+        pos.push(math.add(end, math.multiply(tan, -end_dist1), math.multiply(norm, this.drawoffset)));
+        pos.push(math.add(end, math.multiply(tan, -end_dist1)));
         pos.push(end);
         lines.push(pos);
         return {rect:rect, rect_start: rect_start, rect_end: rect_end, lines: lines};
@@ -129,6 +141,86 @@ class Dashpot {
         let F = [0, 0]
         let Fx = [[0, 0], [0, 0]]
         let Fv = [[-this.strength, this.strength], [this.strength, -this.strength]]
+        return [F, Fx, Fv]
+    }
+}
+
+class ForceGenerator {
+    constructor(start, end, strength) {
+        this.strength = strength;
+        this.t_start = 0;
+        this.t_end = 1;
+        this.target_ids = [start, end];
+        this.drawoffset = 0;
+    }
+    init(points) {
+    }
+    draw(points, t) {
+        let [start, end] = points;
+        let width = 0.1
+        let start_dist = 0.2
+        let end_dist = 0.2
+        let hole_dist = 0.4
+
+        let start_dist1 = 0.1
+        let end_dist1 = 0.1
+
+        let radius = 0.2
+
+        // difference vector
+        let dist = math.subtract(end, start);
+        // ignore 0 elements
+        if(math.norm(dist) === 0)
+            return
+
+        start_dist = (math.norm(dist)/2 - radius)
+        end_dist = (math.norm(dist)/2 - radius)
+        console.log(math.norm(dist), radius, start_dist)
+
+        // normalized normal vector
+        let norm = math.divide([-dist[1], dist[0]], math.norm(dist))
+        // normalized tangential vector
+        let tan = math.divide(dist, math.norm(dist))
+
+        // start at the first position
+        let lines = []
+        let pos = [start]
+        pos.push(math.add(start, math.multiply(tan, start_dist1)))
+        // add the start point with offset
+        pos.push(math.add(start, math.multiply(tan, start_dist1), math.multiply(norm, this.drawoffset)))
+        pos.push(math.add(start, math.multiply(tan, start_dist), math.multiply(norm, this.drawoffset)))
+        let rect = {x: start[0], width:math.norm(dist), y: this.drawoffset-0.2, height: 0.4};
+        let rect_start = {x: start[0], width:start_dist, y: this.drawoffset-0.2, height: 0.4};
+        let rect_end = {x: end[0]-end_dist, width:end_dist, y: this.drawoffset-0.2, height: 0.4};
+
+        // the middle part of the damper
+        //pos.push(math.add(start, math.multiply(tan, hole_dist), math.multiply(norm, this.drawoffset)))
+        //pos.push(math.add(start, dist, math.multiply(tan, -start_dist), math.multiply(norm, this.drawoffset)))
+        lines.push(pos)
+
+        pos = []
+        for(let i=0; i < 360; i++)
+            pos.push(math.add(start, math.multiply(tan, math.norm(dist)/2), math.multiply(norm, this.drawoffset),
+            [-Math.cos(i/180*Math.PI)*radius, Math.sin(i/180*Math.PI)*radius]))
+        lines.push(pos)
+
+        pos = []
+        pos.push(math.add(end, math.multiply(tan, -end_dist), math.multiply(norm, this.drawoffset)));
+        pos.push(math.add(end, math.multiply(tan, -end_dist1), math.multiply(norm, this.drawoffset)));
+        pos.push(math.add(end, math.multiply(tan, -end_dist1)));
+        pos.push(end);
+        lines.push(pos);
+        return {rect:rect, rect_start: rect_start, rect_end: rect_end, lines: lines};
+    }
+
+    eval(t) {
+        if(this.target_ids[0] == this.target_ids[1])
+            return [[0, 0], [[0,0],[0,0]], [[0,0],[0,0]]]
+        let F = [0, 0]
+        if(this.t_start <= t && t < this.t_end)
+            F = [this.strength, -this.strength];
+        let Fx = [[0, 0], [0, 0]]
+        let Fv = [[0, 0], [0, 0]]
         return [F, Fx, Fv]
     }
 }
@@ -381,6 +473,14 @@ class System {
     }
 
     simulateOverdamped() {
+        this.external[0].target_ids[0] = this.plot_point;
+        if(this.external[0].constructor.name == "Force")
+            this.points[this.plot_point][0] = 1;
+        else
+            this.points[this.plot_point][0] = 0;
+        for(let i = 1; i < this.points.length-1; i++)
+            this.points[i][0] = 1;
+
         let points = this.get_points();
         for(let element of this.elements) {
             let p = [];
@@ -389,11 +489,6 @@ class System {
             }
             element.init(p);
         }
-        this.external[0].target_ids[0] = this.plot_point;
-        if(this.external[0].constructor.name == "Force")
-            this.points[this.plot_point][0] = 1;
-        else
-            this.points[this.plot_point][0] = 0;
 
         this.points_trajectory = [];
         this.points_force_trajectory = [];

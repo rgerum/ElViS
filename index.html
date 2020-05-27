@@ -168,8 +168,15 @@
     <select id="type" disabled>
         <option value="Spring">Spring</option>
         <option value="Dashpot">Dashpot</option>
+        <option value="ForceGenerator">ForceGenerator</option>
     </select>
     <input id="input_number" type="number" value="1" min="0" disabled/>
+    <div id="input_force_generator" style="display: none">
+    start:
+    <input id="input_start" type="number" step=any value=0 min=0/>
+    end:
+    <input id="input_end" type="number" value=1 min=0 />
+    </div>
 
     <h2>System</h2>
     <svg id="display"></svg>
@@ -279,6 +286,7 @@
     }
 
     let selected_element_id;
+    document.getElementById("type").value = "Spring";
     function selectedElement(i) {
         let element = sim.elements[i];
         selected_element_id = i;
@@ -286,6 +294,10 @@
         document.getElementById("input_number").disabled = false;
         document.getElementById("type").value = element.constructor.name;
         document.getElementById("type").disabled = false;
+        document.getElementById("input_start").value = element.t_start;
+        document.getElementById("input_end").value = element.t_end;
+        document.getElementById("input_force_generator").style.display = (element.constructor.name == "ForceGenerator") ? "inline-block" : "none";
+
         display.selectElement(i);
     }
     function deselectElement() {
@@ -303,9 +315,24 @@
     document.getElementById("type").oninput = function() {
         if(selected_element_id != undefined) {
             let element = sim.elements[selected_element_id]
-            let element2 = new {"Spring": Spring, "Dashpot": Dashpot}[this.value](element.target_ids[0], element.target_ids[1], element.strength);
+            let element2 = new {"Spring": Spring, "Dashpot": Dashpot, "ForceGenerator": ForceGenerator}[this.value](element.target_ids[0], element.target_ids[1], element.strength);
             sim.elements[selected_element_id] = element2;
+            document.getElementById("input_force_generator").style.display = (element2.constructor.name == "ForceGenerator") ? "inline-block" : "none";
+            document.getElementById("input_start").value = element2.t_start;
+            document.getElementById("input_end").value = element2.t_end;
             sim.updateDrawOffsets();
+            updateSystem();
+        }
+    }
+    document.getElementById("input_start").oninput = function() {
+        if(selected_element_id != undefined) {
+            sim.elements[selected_element_id].t_start = parseFloat(this.value);;
+            updateSystem();
+        }
+    }
+    document.getElementById("input_end").oninput = function() {
+        if(selected_element_id != undefined) {
+            sim.elements[selected_element_id].t_end = parseFloat(this.value);
             updateSystem();
         }
     }
