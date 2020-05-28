@@ -361,8 +361,80 @@ class System {
         this.h = 0.01;
         this.error = undefined;
 
+        this.name = "";
+        this.edited = false;
+
         this.plot_point = 1;
     }
+    getName() {
+        if(this.edited)
+            return this.name + " (edited)";
+        return this.name;
+    }
+
+    convertElementsToParallelGroups() {
+        class Empty {
+            constructor(start, end) {
+                this.target_ids = [start, end];
+            }
+
+        }
+        function tryHierarchy(hierarchy, element) {
+            let [s, e] = element.target_ids;
+            if(hierarchy.o === "serial") {
+                if (hierarchy.s <= s && e <= hierarchy.e) {
+                    let index = 0;
+                    for (let hier of hierarchy) {
+                        if (hier.length !== undefined) {
+                            if (tryHierarchy(hier, element))
+                                return true;
+                        }
+                        else if(hier.constructor.name === "Empty") {
+                            console.log("empty", hier)
+                            console.log("Empty", hier.target_ids[0], s, e, hier.target_ids[1])
+                            // swap an empty element with the current element
+                            if (hier.target_ids[0] <= s && e <= hier.target_ids[1]) {
+                                let insert = [];
+                                if(hier.target_ids[0] < s)
+                                    insert.push(new Empty(hier.target_ids[0], s));
+                                insert.push(element)
+                                if(e < hier.target_ids[1])
+                                    insert.push(new Empty(e, hier.target_ids[1]));
+                                hierarchy.splice(index, 1, insert);
+                                return true;
+                            }
+                            // add the element in the
+                        }
+                        else if (hier.target_ids[0] === s && hier.target_ids[1] === e) {
+                            let new_hierarchy = [hier, element];
+                            new_hierarchy.o = "parallel";
+                            new_hierarchy.s = s;
+                            new_hierarchy.e = e;
+                            hierarchy.splice(index, 1, new_hierarchy);
+                            return true;
+                        }
+                        index += 1;
+                    }
+                }
+            }
+            if(hierarchy.o === "parallel") {
+                if (hierarchy.s === s && hierarchy.e === e) {
+                    hierarchy.push(element);
+                    return true;
+                }
+            }
+            return false;
+        }
+        let hierarchy = [new Empty(0, this.points.length-1)];
+        hierarchy.s = 0;
+        hierarchy.e = this.points.length-1;
+        hierarchy.o = "serial";
+        for(let element of this.elements) {
+            tryHierarchy(hierarchy, element);
+        }
+        console.log(hierarchy);
+    }
+
 
     setData(data) {
         this.plot_point = data.plot_point

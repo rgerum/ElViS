@@ -387,6 +387,7 @@ class Display {
                                 sim.updateDrawOffsets();
                                 display.setData(sim.draw());
                                 display.setPoints(sim.points, sim);
+                                sim.edited = true;
                                 updateSystem();
                             })
                         )
@@ -510,6 +511,7 @@ class Display {
                         sim.updateDrawOffsets();
                         display.setData(sim.draw());
                         display.setPoints(sim.points, sim);
+                        sim.edited = true;
                         updateSystem();
                     })
                 )

@@ -179,7 +179,7 @@
     </div>
     <input type="button" id="input_remove" value="remove" onclick="removeElement()"/>
 
-    <h2>System</h2>
+    <h2>System: <span id="system_name"></span></h2>
     <span id="error"></span>
     <svg id="display"></svg>
     <svg id="plot1"></svg>
@@ -199,35 +199,83 @@
         let data = undefined;
         if(i == 0)
             data = {
+                "name": "Spring",
                 "plot_point": 1,
                 "points": [[0, 0], [1, 1]],
                 "elements": [["Spring", 0, 1, 1, 1]],
             }
         else if(i == 1)
             data = {
+                "name": "Dashpot",
                 "plot_point": 1,
                 "points": [[0, 0], [1, 1]],
                 "elements": [["Dashpot", 0, 1, 1]],
             }
         else if(i == 2)
             data = {
+                "name": "Maxwell Body",
                 "plot_point": 2,
                 "points": [[0, 0], [1, 1], [1, 2]],
                 "elements": [["Dashpot", 0, 1, 1], ["Spring", 1, 2, 1, 1]],
             }
         else if(i == 3)
             data = {
+                "name": "Voigt Body",
                 "plot_point": 1,
                 "points": [[0, 0], [1, 1]],
                 "elements": [["Dashpot", 0, 1, 1], ["Spring", 0, 1, 1, 1]],
             }
         else if(i == 4)
             data = {
+                "name": "Kelvin Body",
                 "plot_point": 2,
                 "points": [[0, 0], [1, 1], [1, 2]],
                 "elements": [["Spring", 0, 2, 1, 2], ["Dashpot", 0, 1, 1], ["Spring", 1, 2, 1, 1]],
             }
+        // alternatives
+        else if(i == 5)
+            data = {
+                "name": "Maxwell Body",
+                "plot_point": 2,
+                "points": [[0, 0], [1, 1], [1, 2]],
+                "elements": [["Dashpot", 1, 2, 1], ["Spring", 0, 1, 1, 1]],
+            }
+        else if(i == 6)
+            data = {
+                "name": "Kelvin Body",
+                "plot_point": 2,
+                "points": [[0, 0], [1, 1], [1, 2]],
+                "elements": [["Spring", 0, 2, 1, 2], ["Dashpot", 1, 2, 1], ["Spring", 0, 1, 1, 1]],
+            }
         return data;
+    }
+    function compareWithData() {
+        for(let i = 0; i < 7; i++) {
+            let data = getDataPreset(i);
+            let elements_to_match = [];
+            for(let j = 0; j < data.elements.length; j++) {
+                elements_to_match.push(data.elements[j]);
+            }
+            let not_matched = false;
+            for (let element of sim.elements) {
+                let found = false;
+                for(let j = 0; j < elements_to_match.length; j++) {
+                    let element2 = elements_to_match[j];
+                    if(element2[0] === element.constructor.name &&
+                        (element2[1] === element.target_ids[0] && element2[2] === element.target_ids[1])) {
+                        elements_to_match.splice(j, 1);
+                        found = true;
+                        break;
+                    }
+                }
+                if(found === false) {
+                    not_matched = true;
+                    break
+                }
+            }
+            if(not_matched === false && elements_to_match.length == 0)
+                return data.name;
+        }
     }
 
     function generateImageFromData(svg, data) {
@@ -374,11 +422,19 @@
     }
 
     function setData(data) {
+        sim.name = data.name;
+        sim.edited = false;
         deselectElement();
         sim.setData(data);
         updateSystem();
     }
     function updateSystem() {
+        let system_name = compareWithData();
+        if(system_name !== undefined) {
+            sim.name = system_name;
+            sim.edited = false;
+        }
+        document.getElementById("system_name").innerText = sim.getName();
         sim.simulateOverdamped();
         display.setData(sim.draw());
         display.setPoints(sim.points, sim);
