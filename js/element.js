@@ -5,6 +5,9 @@ class Spring {
         this.target_ids = [start, end];
 
         this.drawoffset = 0;
+
+        this.unit = "N/m";
+        this.strength_name = "k";
     }
     init(points) {
         let [start, end] = points;
@@ -77,6 +80,9 @@ class Dashpot {
         this.rest = rest;
         this.target_ids = [start, end];
         this.drawoffset = 0;
+
+        this.unit = "Ns/m";
+        this.strength_name = "µ";
     }
     init(points) {
     }
@@ -152,6 +158,9 @@ class ForceGenerator {
         this.t_end = 1;
         this.target_ids = [start, end];
         this.drawoffset = 0;
+
+        this.unit = "N";
+        this.strength_name = "F";
     }
     init(points) {
     }
@@ -243,7 +252,8 @@ class Force {
         this.strength = strength;
         this.t_start = t_start;
         this.t_end = t_end;
-        this.target_ids = [start]
+        this.target_ids = [start];
+        this.unit = "N";
     }
     init(points) {}
 
@@ -299,7 +309,8 @@ class Displacement {
         this.strength = strength;
         this.t_start = t_start;
         this.t_end = t_end;
-        this.target_ids = [start]
+        this.target_ids = [start];
+        this.unit = "m";
     }
     init(points) {}
 

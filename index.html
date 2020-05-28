@@ -142,6 +142,21 @@
             background:red;
         }
 
+        .property {
+            display: inline-block;
+            padding-right: 10px;
+        }
+
+        input[type=number] {
+            text-align: right;
+            width: 50px;
+            border-radius: 5px;
+        }
+
+        .unit {
+
+        }
+
     </style>
 
 </head>
@@ -163,12 +178,21 @@
         <option value="Theta">Theta</option>
         <option value="Ramp">Ramp</option>
     </select>
-    strength:
-    <input id="force_strength" type="number" step=any value=1 min=0 />
-    start:
-    <input id="force_start" type="number" step=any value=1 min=0 />
-    end:
-    <input id="force_end" type="number" value="3" min="0"/>
+    <div class="property">
+        <label for="force_strength">strength:</label>
+        <input id="force_strength" type="number" step=any value=1 min=0 />
+        <span class="unit">N</span>
+    </div>
+    <div class="property">
+        <label for="force_start">start:</label>
+        <input id="force_start" type="number" step=any value=1 min=0 />
+        <span class="unit">s</span>
+    </div>
+    <div class="property">
+        <label for="force_end">end:</label>
+        <input id="force_end" type="number" value="3" min="0"/>
+        <span class="unit">s</span>
+    </div>
 
     <h2>Element properties</h2>
     <select id="type" disabled>
@@ -176,12 +200,22 @@
         <option value="Dashpot">Dashpot</option>
         <option value="ForceGenerator">ForceGenerator</option>
     </select>
-    <input id="input_number" type="number" value="1" min="0" disabled/>
+    <div class="property">
+        <label for="input_number">k: </label>
+        <input id="input_number" type="number" value="1" min="0" disabled/>
+        <span class="unit">N/m</span>
+    </div>
     <div id="input_force_generator" style="display: none">
-    start:
-    <input id="input_start" type="number" step=any value=0 min=0/>
-    end:
-    <input id="input_end" type="number" value=1 min=0 />
+        <div class="property">
+            <label for="input_start">start: </label>
+            <input id="input_start" type="number" step=any value=0 min=0/>
+            <span class="unit">s</span>
+        </div>
+        <div class="property">
+            <label for="input_end">end:</label>
+            <input id="input_end" type="number" value=1 min=0 />
+            <span class="unit">s</span>
+        </div>
     </div>
     <input type="button" id="input_remove" value="remove" onclick="removeElement()"/>
 
@@ -193,12 +227,25 @@
     <svg id="slider" width="500" height="30"></svg>
 
     <h2>simulation time range</h2>
-    start:
-    <input id="sim_start" type="number" step=any />
-    end:
-    <input id="sim_end" type="number" />
-    delta t:
-    <input id="sim_delta_t" type="number" step="0.01"/>
+
+    <div class="property">
+        <label for="sim_start">start: </label>
+        <input id="sim_start" type="number" step=any/>
+        <span class="unit">s</span>
+    </div>
+
+    <div class="property">
+        <label for="sim_end">end: </label>
+        <input id="sim_end" type="number" step=any/>
+        <span class="unit">s</span>
+    </div>
+
+    <div class="property">
+        <label for="sim_delta_t">delta t: </label>
+        <input id="sim_delta_t" type="number" step=0.01/>
+        <span class="unit">s</span>
+    </div>
+
 </div>
 <script>
     function getDataPreset(i) {
@@ -301,8 +348,8 @@
         generateImageFromData(svg, getDataPreset(d));
     })
 
-    let plot1 = new Plot(d3.select("#plot1"), {xlabel: "", ylabel: "displacement", left: 100, top: 5, bottom: 7, innerheight: 150, height: 160+7+5});
-    let plot2 = new Plot(d3.select("#plot2"), {xlabel: "time", ylabel: "force", left: 100, top:5, bottom: 100, innerheight: 150, height: 150+5+100});
+    let plot1 = new Plot(d3.select("#plot1"), {xlabel: "", ylabel: "displacement (m)", left: 100, top: 5, bottom: 7, innerheight: 150, height: 160+7+5});
+    let plot2 = new Plot(d3.select("#plot2"), {xlabel: "time (s)", ylabel: "force (N)", left: 100, top:5, bottom: 100, innerheight: 150, height: 150+5+100});
     plot1.setXLabel("time")
     //plot1.legend(400, 0);
     let display = new Display(d3.select("#display"), {});
@@ -345,6 +392,7 @@
     document.getElementById("type_external").oninput = function() {
         let element = sim.external[0]
         let element2 = new {"Force": Force, "Displacement": Displacement}[this.value](element.start, element.strength, element.t_start, element.t_end);
+        document.getElementById("type_external").parentElement.getElementsByClassName("unit")[0].innerText = element2.unit;
         sim.external[0] = element2;
         sim.updateDrawOffsets();
         updateSystem();
@@ -380,6 +428,9 @@
         document.getElementById("input_end").value = element.t_end;
         document.getElementById("input_force_generator").style.display = (element.constructor.name == "ForceGenerator") ? "inline-block" : "none";
 
+        document.getElementById("input_number").parentElement.getElementsByClassName("unit")[0].innerText = element.unit;
+        document.getElementById("input_number").parentElement.getElementsByTagName("label")[0].innerText = element.strength_name;
+
         display.selectElement(i);
     }
     function deselectElement() {
@@ -404,6 +455,9 @@
             document.getElementById("input_force_generator").style.display = (element2.constructor.name == "ForceGenerator") ? "inline-block" : "none";
             document.getElementById("input_start").value = element2.t_start;
             document.getElementById("input_end").value = element2.t_end;
+
+            document.getElementById("input_number").parentElement.getElementsByClassName("unit")[0].innerText = element2.unit;
+            document.getElementById("input_number").parentElement.getElementsByTagName("label")[0].innerText = element2.strength_name;
             sim.updateDrawOffsets();
             updateSystem();
         }
