@@ -270,10 +270,24 @@ class Force {
         return {rect:rect, lines:lines};
     }
 
-    eval(t, p, p0) {
+    eval(t, p, p0, external_protocol) {
         let F = [0];
-        if(this.t_start <= t && t < this.t_end)
-            F = [this.strength];
+        if(external_protocol === "Creep") {
+            if (this.t_start <= t && t < this.t_end)
+                F = [this.strength];
+        }
+        if(external_protocol === "Delta") {
+            if (this.t_start <= t && t < this.t_start + 0.01)
+                F = [this.strength/0.01];
+        }
+        if(external_protocol === "Theta") {
+            if (this.t_start <= t)
+                F = [this.strength];
+        }
+        if(external_protocol === "Ramp") {
+            if (this.t_start <= t && t < this.t_end)
+                F = [this.strength*(t-this.t_start)/(this.t_end-this.t_start)];
+        }
         let Fx = [[0]];
         let Fy = [[0]];
         return [F, Fx, Fy]
@@ -293,15 +307,29 @@ class Displacement {
         return {rect: {x:0,y:0,width:0, height: 0}, lines: []};
     }
 
-    eval(t, p, p0) {
-        let F = [0];
-        if(this.t_start <= t && t < this.t_end)
-            p[this.target_ids[0]] = p0[this.target_ids[0]][1] + this.strength;
-        else
-            p[this.target_ids[0]] = p0[this.target_ids[0]][1];
+    eval(t, p, p0, external_protocol) {
+        let offset = [0];
+        if(external_protocol === "Creep") {
+            if (this.t_start <= t && t < this.t_end)
+                offset = [this.strength];
+        }
+        if(external_protocol === "Delta") {
+            if (this.t_start <= t && t < this.t_start + 0.01)
+                offset = [this.strength/0.01];
+        }
+        if(external_protocol === "Theta") {
+            if (this.t_start <= t)
+                offset = [this.strength];
+        }
+        if(external_protocol === "Ramp") {
+            if (this.t_start <= t && t < this.t_end)
+                offset = [this.strength*(t-this.t_start)/(this.t_end-this.t_start)];
+        }
+
+        p[this.target_ids[0]] = p0[this.target_ids[0]][1] + offset[0];
         let Fx = [[0]];
         let Fy = [[0]];
-        return [F, Fx, Fy]
+        return [[0], Fx, Fy]
     }
 }
 
@@ -365,6 +393,8 @@ class System {
         this.edited = false;
 
         this.plot_point = 1;
+
+        this.external_protocol = "Creep";
     }
     getName() {
         if(this.edited)
@@ -608,7 +638,7 @@ class System {
 
             for(let group of [this.elements, this.external]) {
                 for (let element of group) {
-                    let [F_node, Fx_node, Fv_node] = element.eval(t, p, this.points);
+                    let [F_node, Fx_node, Fv_node] = element.eval(t, p, this.points, this.external_protocol);
                     for (let i in element.target_ids) {
                         F[element.target_ids[i]] += F_node[i];
                         for (let j in element.target_ids) {
@@ -651,7 +681,7 @@ class System {
             p = p2;
             f = f2;
             if(this.points[this.plot_point][0] == 1) {
-                let [F_node, Fx_node, Fv_node] = this.external[0].eval(t, p, this.points);
+                let [F_node, Fx_node, Fv_node] = this.external[0].eval(t, p, this.points, this.external_protocol);
                 f2[this.plot_point] = F_node[0];
             }
             this.points_trajectory.push(p);
