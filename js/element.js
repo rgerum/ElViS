@@ -427,7 +427,7 @@ class System {
             for(let j in element.target_ids)
                 usage_count[element.target_ids[j]] += 1;
         }
-        for(let i = this.points.length-1; i >= 0; i--) {
+        for(let i = this.points.length-1; i >= 1; i--) {
             if(usage_count[i] == 0) {
                 this.points.splice(i, 1);
                 for(let element of this.elements) {
@@ -492,6 +492,7 @@ class System {
             this.points[this.plot_point][0] = 1;
         else
             this.points[this.plot_point][0] = 0;
+        this.points[0][0] = 0;
         for(let i = 1; i < this.points.length-1; i++)
             this.points[i][0] = 1;
 

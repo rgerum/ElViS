@@ -177,7 +177,7 @@
     end:
     <input id="input_end" type="number" value=1 min=0 />
     </div>
-    <input type="button" value="remove" onclick="removeElement()"/>
+    <input type="button" id="input_remove" value="remove" onclick="removeElement()"/>
 
     <h2>System</h2>
     <span id="error"></span>
@@ -319,6 +319,7 @@
         document.getElementById("input_number").disabled = false;
         document.getElementById("type").value = element.constructor.name;
         document.getElementById("type").disabled = false;
+        document.getElementById("input_remove").disabled = false;
         document.getElementById("input_start").value = element.t_start;
         document.getElementById("input_end").value = element.t_end;
         document.getElementById("input_force_generator").style.display = (element.constructor.name == "ForceGenerator") ? "inline-block" : "none";
@@ -330,7 +331,9 @@
         selected_element_id = undefined;
         document.getElementById("input_number").disabled = true;
         document.getElementById("type").disabled = true;
+        document.getElementById("input_remove").disabled = true;
     }
+    deselectElement();
     document.getElementById("input_number").oninput = function() {
         if(selected_element_id != undefined) {
             sim.elements[selected_element_id].strength = parseFloat(this.value);;
@@ -358,6 +361,14 @@
     document.getElementById("input_end").oninput = function() {
         if(selected_element_id != undefined) {
             sim.elements[selected_element_id].t_end = parseFloat(this.value);
+            updateSystem();
+        }
+    }
+    function removeElement() {
+        if(selected_element_id != undefined) {
+            sim.elements.splice(selected_element_id, 1);
+            sim.removeUnusedPoints();
+            deselectElement();
             updateSystem();
         }
     }
