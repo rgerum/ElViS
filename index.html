@@ -185,6 +185,14 @@
     <svg id="plot1"></svg>
     <svg id="plot2"></svg>
     <svg id="slider" width="500" height="30"></svg>
+
+    <h2>simulation time range</h2>
+    start:
+    <input id="sim_start" type="number" step=any />
+    end:
+    <input id="sim_end" type="number" />
+    delta t:
+    <input id="sim_delta_t" type="number" step="0.01"/>
 </div>
 <script>
     function getDataPreset(i) {
@@ -286,6 +294,21 @@
         sim.updateDrawOffsets();
         updateSystem();
     }
+    document.getElementById("sim_start").value = sim.start_time;
+    document.getElementById("sim_start").oninput = function() {
+        sim.start_time = parseFloat(this.value);
+        updateSystem();
+    }
+    document.getElementById("sim_end").value = sim.end_time;
+    document.getElementById("sim_end").oninput = function() {
+        sim.end_time = parseFloat(this.value);
+        updateSystem();
+    }
+    document.getElementById("sim_delta_t").value = sim.h;
+    document.getElementById("sim_delta_t").oninput = function() {
+        sim.h = parseFloat(this.value);
+        updateSystem();
+    }
 
     let selected_element_id;
     document.getElementById("type").value = "Spring";
@@ -353,6 +376,7 @@
         }
         else
             document.getElementById("error").innerText = ""
+        slider.setRange(0, sim.times.length);
         slider.setValue(0);
         plot1.setXlim(sim.times[0], sim.times[sim.times.length-1]);
         plot1.setYlim(d3.min(sim.data), d3.max(sim.data));
