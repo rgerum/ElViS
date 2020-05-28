@@ -94,8 +94,8 @@ class Dashpot {
         // difference vector
         let dist = math.subtract(end, start);
         // ignore 0 elements
-        if(math.norm(dist) === 0)
-            return
+        //if(math.norm(dist) === 0)
+        //    return
         // normalized normal vector
         let norm = math.divide([-dist[1], dist[0]], math.norm(dist))
         // normalized tangential vector
@@ -171,8 +171,8 @@ class ForceGenerator {
         // difference vector
         let dist = math.subtract(end, start);
         // ignore 0 elements
-        if(math.norm(dist) === 0)
-            return
+        //if(math.norm(dist) === 0)
+        //    return
 
         start_dist = (math.norm(dist)/2 - radiusX)
         end_dist = (math.norm(dist)/2 - radiusX)
@@ -359,6 +359,7 @@ class System {
         this.start_time = -1;
         this.end_time = 5;
         this.h = 0.01;
+        this.error = undefined;
 
         this.plot_point = 1;
     }
@@ -508,6 +509,7 @@ class System {
         this.times = [this.start_time];
 
         let N = this.points.length;
+        this.error = undefined;
 
         let free = [];
         let fixed = []
@@ -551,7 +553,15 @@ class System {
                         Fxv[i][j] = (i === j)*1
                 }
             }
-            let Fxv_inv = math.inv(Fxv);
+            let Fxv_inv = undefined;
+            try {
+                Fxv_inv = math.inv(Fxv);
+            }
+            catch (e) {
+                this.error = e;
+                console.log(Fxv);
+                break;
+            }
 
             let Fv_p = math.multiply(Fv, p_old);
 

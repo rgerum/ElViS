@@ -177,8 +177,10 @@
     end:
     <input id="input_end" type="number" value=1 min=0 />
     </div>
+    <input type="button" value="remove" onclick="removeElement()"/>
 
     <h2>System</h2>
+    <span id="error"></span>
     <svg id="display"></svg>
     <svg id="plot1"></svg>
     <svg id="plot2"></svg>
@@ -346,6 +348,11 @@
         sim.simulateOverdamped();
         display.setData(sim.draw());
         display.setPoints(sim.points, sim);
+        if(sim.error !== undefined) {
+            document.getElementById("error").innerText = "Error: some points of the system have undefined positions."
+        }
+        else
+            document.getElementById("error").innerText = ""
         slider.setValue(0);
         plot1.setXlim(sim.times[0], sim.times[sim.times.length-1]);
         plot1.setYlim(d3.min(sim.data), d3.max(sim.data));
