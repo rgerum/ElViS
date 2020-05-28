@@ -300,6 +300,7 @@
     plot1.setXLabel("time")
     //plot1.legend(400, 0);
     let display = new Display(d3.select("#display"), {});
+    display.legend(500, 10);
     let slider = new Slider("#slider", {range: [0, 500-1], value: 0, play:true, step: 10});
     let sim = new System();
     sim.simulateOverdamped();

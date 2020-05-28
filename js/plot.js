@@ -243,6 +243,46 @@ class Display {
         this.point_group = this.selection.append("g").attr("class", "points")
         this.new_point = this.selection.append("circle").attr("r", "0px")
             .attr("fill", "blue").attr("opacity", 0.5)
+
+        this.legend_group = undefined;
+    }
+
+    legend(x, y) {
+        this.legend_group = this.selection.append("g")
+            .attr("transform", `translate(${x}, ${y})`)
+            .attr("class", "legend")
+
+        let labels = ["fixed point", "free point", "plotted fixed point", "plotted free point"];
+        let w = 8, dw = 5, dy = 18;
+        let colors = this.color;
+        let self = this;
+        this.legend_group.selectAll("g").data(labels).each(function(d,i) {
+            d3.select(this).select("text").text(d)
+        }).enter().append("g").each(function(d,i) {
+            let circle = d3.select(this).append("circle")
+                .attr("cx", 0)
+                .attr("cy", i * dy)
+                .attr("r", "5px")
+            if(i === 0)
+                circle.attr("fill", "red")
+            if(i === 1)
+                circle.attr("fill", "blue")
+            if(i === 2)
+                circle.attr("fill", "none")
+                    .attr("stroke", "red")
+                    .attr("stroke-width", 2)
+            if(i === 3)
+                circle.attr("fill", "none")
+                      .attr("stroke", "blue")
+                      .attr("stroke-width", 2)
+
+            d3.select(this).append("text")
+                .attr("x", w + dw).attr("y", i * dy + 4)
+                .style("text-anchor", "start")
+                .attr("class", "annotation")
+                .attr("cursor", "pointer")
+                .text(d)
+        });
     }
 
     setXlim(min, max) {
@@ -520,8 +560,11 @@ class Display {
             .merge(paths)
             .attr("cx", d => this.scale(d[1]))
             .attr("cy", d => this.scale(0))
+            .attr("stroke-width", 0)
             .style("fill", d => d[0] ? "blue" : "red")
         paths.exit().remove();
+        let nodes = paths_enter.merge(paths).nodes();
+        d3.select(nodes[nodes.length-1]).attr("stroke", d => d[0] ? "blue" : "red").style("fill", "white").attr("stroke-width", 2);
     }
 
 }
