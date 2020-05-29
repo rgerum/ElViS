@@ -593,12 +593,17 @@ class System {
         return elements;
     }
 
-    simulateOverdamped() {
+    simulateOverdamped(no_external=false) {
         this.external[0].target_ids[0] = this.plot_point;
-        if(this.external[0].constructor.name == "Force")
-            this.points[this.plot_point][0] = 1;
-        else
+        if(no_external) {
             this.points[this.plot_point][0] = 0;
+        }
+        else {
+            if (this.external[0].constructor.name == "Force")
+                this.points[this.plot_point][0] = 1;
+            else
+                this.points[this.plot_point][0] = 0;
+        }
         this.points[0][0] = 0;
         for(let i = 1; i < this.points.length-1; i++)
             this.points[i][0] = 1;
@@ -641,7 +646,10 @@ class System {
             let Fx = zeros(N, N);
             let Fv = zeros(N, N);
 
-            for(let group of [this.elements, this.external]) {
+            let all = [this.elements];
+            if(no_external === false)
+                all = [this.elements, this.external];
+            for(let group of all) {
                 for (let element of group) {
                     let [F_node, Fx_node, Fv_node] = element.eval(t, p, this.points, this.external_protocol);
                     for (let i in element.target_ids) {

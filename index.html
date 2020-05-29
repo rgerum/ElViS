@@ -167,7 +167,11 @@
     <h2>Examples</h2>
     <div id="buttons"></div>
 
+    <div id="all_external_input">
     <h2>Input</h2>
+        <span id="external_input_force_generator_explanation">
+            For systems that contain a force generator the external stimulus is disabled.
+        </span>
     <select id="type_external">
         <option value="Force" selected>Force</option>
         <option value="Displacement">Displacement</option>
@@ -192,6 +196,7 @@
         <label for="force_end">end:</label>
         <input id="force_end" type="number" value="3" min="0"/>
         <span class="unit">s</span>
+    </div>
     </div>
 
     <h2>Element properties</h2>
@@ -501,7 +506,35 @@
             sim.edited = false;
         }
         document.getElementById("system_name").innerText = sim.getName();
-        sim.simulateOverdamped();
+
+        // try to find a force generator
+        let has_force_generator = false;
+        for(let element of sim.elements)
+            if(element.constructor.name === "ForceGenerator")
+                has_force_generator = true;
+        let all_external_input = document.getElementById("all_external_input");
+        if(has_force_generator) {
+            all_external_input.style.background = "gray";
+            document.getElementById("external_input_force_generator_explanation").style.display = "block";
+            let inputs = all_external_input.getElementsByTagName("input");
+            for(let input of inputs)
+                input.disabled = true;
+            inputs = all_external_input.getElementsByTagName("select");
+            for(let input of inputs)
+                input.disabled = true;
+        }
+        else {
+            all_external_input.style.background = "none";
+            document.getElementById("external_input_force_generator_explanation").style.display = "none";
+            let inputs = all_external_input.getElementsByTagName("input");
+            for(let input of inputs)
+                input.disabled = false;
+            inputs = all_external_input.getElementsByTagName("select");
+            for(let input of inputs)
+                input.disabled = false;
+        }
+
+        sim.simulateOverdamped(has_force_generator);
         display.setData(sim.draw());
         display.setPoints(sim.points, sim);
         if(sim.error !== undefined) {
