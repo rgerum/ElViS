@@ -512,12 +512,29 @@
         slider.setRange(0, sim.times.length);
         slider.setValue(0);
         plot1.setXlim(sim.times[0], sim.times[sim.times.length-1]);
-        plot1.setYlim(d3.min(sim.data), d3.max(sim.data));
+        let index = parseInt((sim.external[0].t_start-sim.start_time)/sim.h);
+        let force_jump = sim.data[index];
+        sim.data[index] = null
+        let [min, max] = [d3.min(sim.data), d3.max(sim.data)];
+        if(min === max)
+            plot1.setYlim(min, min+1);
+        else
+            plot1.setYlim(min, max);
+        sim.data[index] = force_jump;
         plot1.setData([{x: sim.times, y: sim.data},], ["displacement",])
         plot1.setCursor([[sim.times[0], sim.data[0]]]);
 
         plot2.setXlim(sim.times[0], sim.times[sim.times.length-1]);
-        plot2.setYlim(d3.min(sim.dataF), d3.max(sim.dataF));
+
+        force_jump = sim.dataF[index];
+        sim.dataF[index] = null;
+        min = d3.min(sim.dataF); max = d3.max(sim.dataF);
+        if(min === max)
+            plot2.setYlim(min, min+1);
+        else
+            plot2.setYlim(min, max);
+        sim.dataF[index] = force_jump;
+
         plot2.setData([{x: sim.times, y:sim.dataF}], ["force"])
         plot2.setCursor([[sim.times[0], sim.dataF[0]]]);
     }

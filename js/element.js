@@ -418,14 +418,13 @@ class System {
             constructor(start, end) {
                 this.target_ids = [start, end];
             }
-
         }
         function tryHierarchy(hierarchy, element) {
             let [s, e] = element.target_ids;
             if(hierarchy.o === "serial") {
                 if (hierarchy.s <= s && e <= hierarchy.e) {
                     let index = 0;
-                    for (let hier of hierarchy) {
+                    for (let hier of hierarchy.elements) {
                         if (hier.length !== undefined) {
                             if (tryHierarchy(hier, element))
                                 return true;
@@ -441,17 +440,14 @@ class System {
                                 insert.push(element)
                                 if(e < hier.target_ids[1])
                                     insert.push(new Empty(e, hier.target_ids[1]));
-                                hierarchy.splice(index, 1, insert);
+                                hierarchy.elements.splice(index, 1, insert);
                                 return true;
                             }
                             // add the element in the
                         }
                         else if (hier.target_ids[0] === s && hier.target_ids[1] === e) {
-                            let new_hierarchy = [hier, element];
-                            new_hierarchy.o = "parallel";
-                            new_hierarchy.s = s;
-                            new_hierarchy.e = e;
-                            hierarchy.splice(index, 1, new_hierarchy);
+                            let new_hierarchy = {o: "parallel", s:s, e:e, elements:[hier, element]};
+                            hierarchy.elements.splice(index, 1, new_hierarchy);
                             return true;
                         }
                         index += 1;
@@ -460,16 +456,14 @@ class System {
             }
             if(hierarchy.o === "parallel") {
                 if (hierarchy.s === s && hierarchy.e === e) {
-                    hierarchy.push(element);
+                    hierarchy.elements.push(element);
                     return true;
                 }
             }
             return false;
         }
-        let hierarchy = [new Empty(0, this.points.length-1)];
-        hierarchy.s = 0;
-        hierarchy.e = this.points.length-1;
-        hierarchy.o = "serial";
+        let hierarchy = {s: 0, e: this.points.length-1, o: "serial", elements: [new Empty(0, this.points.length-1)]};
+
         for(let element of this.elements) {
             tryHierarchy(hierarchy, element);
         }
