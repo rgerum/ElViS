@@ -305,6 +305,13 @@
                 "points": [[0, 0], [1, 1], [1, 2]],
                 "elements": [["Spring", 0, 2, 1, 2], ["Dashpot", 1, 2, 1], ["Spring", 0, 1, 1, 1]],
             }
+        else if(i == 10)
+            data = {
+                "name": "Kelvin Body",
+                "plot_point": 2,
+                "points": [[0, 0], [1, 1], [1, 2]],
+                "elements": [["Spring", 0, 2, 1, 2], ["Spring", 0, 1, 1, 1], ["Dashpot", 0, 1, 1, 1], ["Dashpot", 1, 2, 1]],
+            }
         return data;
     }
     function compareWithData() {
@@ -492,11 +499,18 @@
         }
     }
 
+    function stopAndReset() {
+        if(slider.playing_timer)
+            slider.play();
+        slider.setValue(0);
+    }
+
     function setData(data) {
         sim.name = data.name;
         sim.edited = false;
         deselectElement();
         sim.setData(data);
+        stopAndReset();
         updateSystem();
     }
     function updateSystem() {
@@ -542,7 +556,7 @@
         }
         else
             document.getElementById("error").innerText = ""
-        slider.setRange(0, sim.times.length);
+        slider.setRange(0, sim.times.length-1);
         slider.setValue(0);
         plot1.setXlim(sim.times[0], sim.times[sim.times.length-1]);
         let index = parseInt((sim.external[0].t_start-sim.start_time)/sim.h);

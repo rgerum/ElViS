@@ -422,10 +422,15 @@ class System {
         function tryHierarchy(hierarchy, element) {
             let [s, e] = element.target_ids;
             if(hierarchy.o === "serial") {
+                console.log("serial", hierarchy.s, s, e, hierarchy.e);
                 if (hierarchy.s <= s && e <= hierarchy.e) {
                     let index = 0;
                     for (let hier of hierarchy.elements) {
-                        if (hier.length !== undefined) {
+                        if(hier.target_ids)
+                            console.log("iterate hierchy", hier.length, hier.constructor.name, hier.target_ids[0], s, hier.target_ids[1], e)
+                        else
+                            console.log("iterate hierchy", hier.length, hier.constructor.name, hier.s, s, hier.e, e)
+                        if (hier.elements !== undefined) {
                             if (tryHierarchy(hier, element))
                                 return true;
                         }
@@ -440,7 +445,7 @@ class System {
                                 insert.push(element)
                                 if(e < hier.target_ids[1])
                                     insert.push(new Empty(e, hier.target_ids[1]));
-                                hierarchy.elements.splice(index, 1, insert);
+                                hierarchy.elements.splice(index, 1, ...insert);
                                 return true;
                             }
                             // add the element in the
@@ -459,15 +464,100 @@ class System {
                     hierarchy.elements.push(element);
                     return true;
                 }
+                if (hierarchy.s <= s && e <= hierarchy.e) {
+                    for (let hier of hierarchy.elements) {
+                        console.log("iterat", hier, hier.elements);
+                        if (hier.elements !== undefined) {
+                            console.log("try, subhierarchy parallel", hier, element)
+                            if (tryHierarchy(hier, element))
+                                return true;
+                        }
+                    }
+                    // if is is not added yet, we neeed a new serial element
+                    let insert = [];
+                    if(hierarchy.s < s)
+                        insert.push(new Empty(hierarchy.s, s));
+                    insert.push(element)
+                    if(e < hierarchy.e)
+                        insert.push(new Empty(e, hierarchy.e));
+                    hierarchy.elements.push({s: hierarchy.s, e: hierarchy.e, o: "serial", elements: insert});
+                    return true;
+                }
             }
             return false;
         }
-        let hierarchy = {s: 0, e: this.points.length-1, o: "serial", elements: [new Empty(0, this.points.length-1)]};
+        let hierarchy = {s: 0, e: this.points.length-1, o: "parallel", elements: []};
 
+        function getHierarchyToString(hierarchy) {
+            let text = [];
+            for (let hier of hierarchy.elements) {
+                if (hier.elements !== undefined)
+                    text.push(getHierarchyToString(hier));
+                else
+                    text.push(hier.target_ids[0]+":"+hier.constructor.name+":"+hier.target_ids[1]);
+            }
+            if(hierarchy.o === "parallel")
+                return "["+hierarchy.s+"-"+hierarchy.e+" "+text.join(",")+"]";
+            return "("+hierarchy.s+"-"+hierarchy.e+" "+text.join(",")+")";
+        }
+
+        console.log("#########################")
         for(let element of this.elements) {
-            tryHierarchy(hierarchy, element);
+            console.log("---->", element, tryHierarchy(hierarchy, element));
+            console.log(getHierarchyToString(hierarchy), hierarchy);
         }
         console.log(hierarchy);
+
+
+        function getHierarchyHeight(hierarchy) {
+            let heights = [];
+            for (let hier of hierarchy.elements) {
+                if (hier.elements !== undefined)
+                    heights += [getHierarchyHeight(hier)];
+                else
+                    heights += [1];
+            }
+            if(hierarchy.o === "parallel")
+                hierarchy.height = 1*d3.sum(heights);
+            else
+                hierarchy.height = 1*d3.max(heights);
+            return hierarchy.height;
+        }
+        getHierarchyHeight(hierarchy);
+        let offset_factor = 0.5;
+        function setHierarchyOffset(hierarchy, offset) {
+            if(hierarchy.o === "parallel") {
+                hierarchy.drawoffset = offset;
+            }
+            else
+                hierarchy.drawoffset = offset;
+            let index = 0;
+            for (let hier of hierarchy.elements) {
+                if(hierarchy.o === "parallel") {
+                    if (hier.elements !== undefined) {
+                        setHierarchyOffset(hier, hierarchy.drawoffset + index + (hier.height-1)/2);
+                        index += hier.height;
+                    }
+                    else {
+                        hier.drawoffset = (hierarchy.drawoffset + index) * offset_factor;
+                        index += 1;
+                    }
+                }
+                else {
+                    if (hier.elements !== undefined) {
+                        setHierarchyOffset(hier, hierarchy.drawoffset - (hierarchy.height-1)/2);
+                    }
+                    else {
+                        hier.drawoffset = hierarchy.drawoffset * offset_factor;
+                    }
+                }
+            }
+        }
+        setHierarchyOffset(hierarchy, -(hierarchy.height - 1) / 2);
+        let offsets = [];
+        for(let element of this.elements)
+            offsets.push(element.drawoffset);
+        console.log(offsets);
     }
 
 
@@ -485,6 +575,8 @@ class System {
     }
 
     updateDrawOffsets() {
+        //this.convertElementsToParallelGroups();
+        //return;
         let element_count = zeros(this.points.length);
         let element_index = zeros(this.elements.length);
 
@@ -592,6 +684,7 @@ class System {
         }
         return elements;
     }
+
 
     simulateOverdamped(no_external=false) {
         this.external[0].target_ids[0] = this.plot_point;

@@ -391,6 +391,7 @@ class Display {
                             .on('start',function (d, ii) {
                                 if(ii == 0)
                                     return
+                                stopAndReset();
                                 this.target_point = undefined;
                                 let x = display.scale.invert(d3.event.x), y = display.scale.invert(d3.event.y);
                                 d.x1 = x;
@@ -509,6 +510,7 @@ class Display {
                         }
                     })
                     .on('start',function (d, i) {
+                        stopAndReset();
                         console.log("drag point", d, i, this);
                         sim.elements.push(new Spring(i, i, 1, 1));
                         display.setData(sim.draw());
