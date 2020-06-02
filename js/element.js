@@ -24,6 +24,11 @@ class Spring {
         let [start, end] = points;
         // difference vector
         let dist = math.subtract(end, start);
+
+        let length = math.norm(dist);
+        let offset = this.drawoffset;
+        if(length < 0)
+            offset = -this.drawoffset;
         // ignore 0 elements
         //if(math.norm(dist) === 0)
         // normalized normal vector
@@ -34,11 +39,11 @@ class Spring {
         let pos = [start]
         pos.push(math.add(start, math.multiply(tang, start_dist1)))
         // add the start point with offset
-        pos.push(math.add(start, math.multiply(tang, start_dist1), math.multiply(norm, this.drawoffset)))
-        pos.push(math.add(start, math.multiply(tang, start_dist), math.multiply(norm, this.drawoffset)))
-        let rect = {x: start[0], width:math.norm(dist), y: this.drawoffset-0.2, height: 0.4};
-        let rect_start = {x: start[0], width:start_dist, y: this.drawoffset-0.2, height: 0.4};
-        let rect_end = {x: end[0]-end_dist, width:end_dist, y: this.drawoffset-0.2, height: 0.4};
+        pos.push(math.add(start, math.multiply(tang, start_dist1), math.multiply(norm, offset)))
+        pos.push(math.add(start, math.multiply(tang, start_dist), math.multiply(norm, offset)))
+        let rect = {x: start[0], width:math.norm(dist), y: offset-0.2, height: 0.4};
+        let rect_start = {x: start[0], width:start_dist, y: offset-0.2, height: 0.4};
+        let rect_end = {x: end[0]-end_dist, width:end_dist, y: offset-0.2, height: 0.4};
 
         // the count of the coil
         let count = parseInt(Math.abs(this.rest) / 0.1)
@@ -48,15 +53,15 @@ class Spring {
                 // and add a point
                 let p_dist = math.multiply(tang, start_dist + (i + 0.5) / count * (math.norm(dist) - start_dist - end_dist));
                 let p_norm = math.multiply(norm, ((i % 2) * 2 - 1) * 0.1);
-                let p_offset = math.multiply(norm, this.drawoffset);
+                let p_offset = math.multiply(norm, offset);
                 let p = math.add(start, p_dist, p_norm, p_offset);
                 pos.push(p);
                 //pos.push([start + dist * (i+0.5)/count + norm * ((i%2)*2-1) * 0.1 + norm * self.drawoffset])
             }
         }
-        pos.push(math.add(start, math.multiply(tang, math.norm(dist)-end_dist), math.multiply(norm, this.drawoffset)))
+        pos.push(math.add(start, math.multiply(tang, math.norm(dist)-end_dist), math.multiply(norm, offset)))
         // add the end point
-        pos.push(math.add(end, math.multiply(tang, -end_dist1), math.multiply(norm, this.drawoffset)));
+        pos.push(math.add(end, math.multiply(tang, -end_dist1), math.multiply(norm, offset)));
         pos.push(math.add(end, math.multiply(tang, -end_dist1)));
         pos.push(end);
         // plot the spring
@@ -99,6 +104,11 @@ class Dashpot {
 
         // difference vector
         let dist = math.subtract(end, start);
+
+        let length = math.norm(dist);
+        let offset = this.drawoffset;
+        if(length < 0)
+            offset = -this.drawoffset;
         // ignore 0 elements
         //if(math.norm(dist) === 0)
         //    return
@@ -112,29 +122,29 @@ class Dashpot {
         let pos = [start]
         pos.push(math.add(start, math.multiply(tan, start_dist1)))
         // add the start point with offset
-        pos.push(math.add(start, math.multiply(tan, start_dist1), math.multiply(norm, this.drawoffset)))
-        let rect = {x: start[0], width:math.norm(dist), y: this.drawoffset-0.2, height: 0.4};
-        let rect_start = {x: start[0], width:start_dist, y: this.drawoffset-0.2, height: 0.4};
-        let rect_end = {x: end[0]-end_dist, width:end_dist, y: this.drawoffset-0.2, height: 0.4};
+        pos.push(math.add(start, math.multiply(tan, start_dist1), math.multiply(norm, offset)))
+        let rect = {x: start[0], width:math.norm(dist), y: offset-0.2, height: 0.4};
+        let rect_start = {x: start[0], width:start_dist, y: offset-0.2, height: 0.4};
+        let rect_end = {x: end[0]-end_dist, width:end_dist, y: offset-0.2, height: 0.4};
 
         // iterate over both parts of the sheath
         if(this.strength != 0) {
             for (let dir of [-1, 1]) {
                 // start at the middle
-                pos.push(math.add(start, math.multiply(tan, start_dist), math.multiply(norm, this.drawoffset)));
+                pos.push(math.add(start, math.multiply(tan, start_dist), math.multiply(norm, offset)));
                 // go up
-                pos.push(math.add(start, math.multiply(tan, start_dist), math.multiply(norm, (dir * width + this.drawoffset))));
+                pos.push(math.add(start, math.multiply(tan, start_dist), math.multiply(norm, (dir * width + offset))));
                 // and along the damper
-                pos.push(math.add(start, dist, math.multiply(tan, -end_dist), math.multiply(norm, dir * width + this.drawoffset)));
+                pos.push(math.add(start, dist, math.multiply(tan, -end_dist), math.multiply(norm, dir * width + offset)));
                 lines.push(pos);
                 pos = [];
             }
         }
         // the middle part of the damper
-        pos.push(math.add(start, math.multiply(tan, hole_dist), math.multiply(norm, this.drawoffset)))
-        pos.push(math.add(start, dist, math.multiply(tan, -start_dist), math.multiply(norm, this.drawoffset)))
+        pos.push(math.add(start, math.multiply(tan, hole_dist), math.multiply(norm, offset)))
+        pos.push(math.add(start, dist, math.multiply(tan, -start_dist), math.multiply(norm, offset)))
 
-        pos.push(math.add(end, math.multiply(tan, -end_dist1), math.multiply(norm, this.drawoffset)));
+        pos.push(math.add(end, math.multiply(tan, -end_dist1), math.multiply(norm, offset)));
         pos.push(math.add(end, math.multiply(tan, -end_dist1)));
         pos.push(end);
         lines.push(pos);
@@ -182,6 +192,10 @@ class ForceGenerator {
         // ignore 0 elements
         //if(math.norm(dist) === 0)
         //    return
+        let length = math.norm(dist);
+        let offset = this.drawoffset;
+        if(end[0] < start[0])
+            offset = -this.drawoffset;
 
         start_dist = (math.norm(dist)/2 - radiusX)
         end_dist = (math.norm(dist)/2 - radiusX)
@@ -209,37 +223,41 @@ class ForceGenerator {
         let pos = [start]
         pos.push(math.add(start, math.multiply(tan, start_dist1)))
         // add the start point with offset
-        pos.push(math.add(start, math.multiply(tan, start_dist1), math.multiply(norm, this.drawoffset)))
-        pos.push(math.add(start, math.multiply(tan, start_dist), math.multiply(norm, this.drawoffset)))
-        let rect = {x: start[0], width:math.norm(dist), y: this.drawoffset-0.2, height: 0.4};
-        let rect_start = {x: start[0], width:start_dist, y: this.drawoffset-0.2, height: 0.4};
-        let rect_end = {x: end[0]-end_dist, width:end_dist, y: this.drawoffset-0.2, height: 0.4};
+        pos.push(math.add(start, math.multiply(tan, start_dist1), math.multiply(norm, offset)))
+        pos.push(math.add(start, math.multiply(tan, start_dist), math.multiply(norm, offset)))
+        let rect = {x: start[0], width:math.norm(dist), y: offset-0.2, height: 0.4};
+        let rect_start = {x: start[0], width:start_dist, y: offset-0.2, height: 0.4};
+        let rect_end = {x: end[0]-end_dist, width:end_dist, y: offset-0.2, height: 0.4};
 
         // the middle part of the damper
-        //pos.push(math.add(start, math.multiply(tan, hole_dist), math.multiply(norm, this.drawoffset)))
-        //pos.push(math.add(start, dist, math.multiply(tan, -start_dist), math.multiply(norm, this.drawoffset)))
+        //pos.push(math.add(start, math.multiply(tan, hole_dist), math.multiply(norm, offset)))
+        //pos.push(math.add(start, dist, math.multiply(tan, -start_dist), math.multiply(norm, offset)))
         lines.push(pos)
 
         pos = []
         for(let i=0; i < 360; i++)
-            pos.push(math.add(start, math.multiply(tan, math.norm(dist)/2), math.multiply(norm, this.drawoffset),
+            pos.push(math.add(start, math.multiply(tan, math.norm(dist)/2), math.multiply(norm, offset),
             [-Math.cos(i/180*Math.PI)*radiusX, Math.sin(i/180*Math.PI)*radiusY]))
         lines.push(pos)
 
         pos = []
-        pos.push(math.add(end, math.multiply(tan, -end_dist), math.multiply(norm, this.drawoffset)));
-        pos.push(math.add(end, math.multiply(tan, -end_dist1), math.multiply(norm, this.drawoffset)));
+        pos.push(math.add(end, math.multiply(tan, -end_dist), math.multiply(norm, offset)));
+        pos.push(math.add(end, math.multiply(tan, -end_dist1), math.multiply(norm, offset)));
         pos.push(math.add(end, math.multiply(tan, -end_dist1)));
         pos.push(end);
         lines.push(pos);
         return {rect:rect, rect_start: rect_start, rect_end: rect_end, lines: lines};
     }
 
-    eval(t) {
+    eval(t, p) {
+        let start = p[this.target_ids[0]];
+        let end = p[this.target_ids[1]];
+        console.log("force generator", p, this.target_ids, end, start)
+
         if(this.target_ids[0] == this.target_ids[1])
             return [[0, 0], [[0,0],[0,0]], [[0,0],[0,0]]]
         let F = [0, 0]
-        if(this.t_start <= t && t < this.t_end)
+        if(this.t_start <= t && t < this.t_end && end-0.1 > start+0.1)
             F = [this.strength, -this.strength];
         let Fx = [[0, 0], [0, 0]]
         let Fv = [[0, 0], [0, 0]]
