@@ -471,6 +471,8 @@
             document.getElementById("input_number").parentElement.getElementsByClassName("unit")[0].innerText = element2.unit;
             document.getElementById("input_number").parentElement.getElementsByTagName("label")[0].innerText = element2.strength_name;
             sim.updateDrawOffsets();
+            sim.edited = true;
+            updateSystemName();
             updateSystem();
         }
     }
@@ -513,13 +515,17 @@
         stopAndReset();
         updateSystem();
     }
-    function updateSystem() {
+    function updateSystemName() {
         let system_name = compareWithData();
         if(system_name !== undefined) {
             sim.name = system_name;
             sim.edited = false;
         }
         document.getElementById("system_name").innerText = sim.getName();
+    }
+
+    function updateSystem() {
+        updateSystemName();
 
         // try to find a force generator
         let has_force_generator = false;
