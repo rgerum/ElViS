@@ -300,7 +300,7 @@ class Force {
 
     eval(t, p, p0, external_protocol) {
         let F = [0];
-        if(external_protocol === "Creep") {
+        if(external_protocol === "Rectangle") {
             if (this.t_start <= t && t < this.t_end)
                 F = [this.strength];
         }
@@ -338,7 +338,7 @@ class Displacement {
 
     eval(t, p, p0, external_protocol) {
         let offset = [0];
-        if(external_protocol === "Creep") {
+        if(external_protocol === "Rectangle") {
             if (this.t_start <= t && t < this.t_end)
                 offset = [this.strength];
         }
@@ -423,7 +423,7 @@ class System {
 
         this.plot_point = 1;
 
-        this.external_protocol = "Creep";
+        this.external_protocol = "Rectangle";
     }
     getName() {
         if(this.edited)

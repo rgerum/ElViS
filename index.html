@@ -177,7 +177,7 @@
         <option value="Displacement">Displacement</option>
     </select>
     <select id="type_external_protocol">
-        <option value="Creep" selected>Creep</option>
+        <option value="Rectangle" selected>Rectangle</option>
         <option value="Delta">Delta</option>
         <option value="Theta">Theta</option>
         <option value="Ramp">Ramp</option>
@@ -427,7 +427,7 @@
 
     let selected_element_id;
     document.getElementById("type").value = "Spring";
-    document.getElementById("type_external_protocol").value = "Creep";
+    document.getElementById("type_external_protocol").value = "Rectangle";
     function selectedElement(i) {
         let element = sim.elements[i];
         selected_element_id = i;
