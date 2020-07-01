@@ -589,6 +589,11 @@ class System {
             //let name = element.splice(0, 1)[0];
             this.elements.push(getElement(element[0], element));
         }
+        if(data.input != undefined) {
+            let element2 = new {"Force": Force, "Displacement": Displacement}[data.input[0]](this.plot_point, data.input[2], data.input[3], data.input[4]);
+            this.external_protocol = data.input[1];
+            this.external[0] = element2;
+        }
         this.updateDrawOffsets();
     }
 

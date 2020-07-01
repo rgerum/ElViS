@@ -11,11 +11,14 @@ class Plot {
             innerwidth = this.width - margin.left - margin.right;
         if(innerheight == undefined)
             innerheight = this.height - margin.top - margin.bottom;
+        this.margin = margin;
+        this.innerwidth = innerwidth;
 
         if(width != undefined) {
             this.selection = selection.attr("width", this.width)
                 .attr("height", this.height)
         }
+        this.svg = this.selection;
         this.selection = this.selection.append("g")
             .attr("class", "plot")
             .attr("transform",
@@ -73,6 +76,11 @@ class Plot {
         this.line_group = this.selection.append("g")
         this.cursor = undefined;
         this.legend_group = undefined;
+    }
+
+    setTitle(name) {
+        this.svg.append("text").text(name).attr("text-anchor", "middle").attr("font-size", "12px")
+            .attr("x", this.margin.left+this.innerwidth/2).attr("y", 10)
     }
 
     legend(x, y) {

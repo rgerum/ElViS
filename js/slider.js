@@ -6,7 +6,7 @@ class Slider {
         if(!add_to_existing_svg) {
             if (svg.node() && svg.node().tagName != "svg") {
                 let node = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-                node.setAttribute('width', 500);
+                node.setAttribute('width', width);
                 node.setAttribute('height', 30);
                 let parent = svg.node();
                 svg = d3.select(parent.appendChild(node));
