@@ -1,11 +1,12 @@
-class QuestionSeriesForce extends Question {
+class QuestionSeriesSpring extends Question {
     constructor() {
         super();
-        this.title = "Force for Serial Elements";
+        this.title = "Spring Constant for Serial Elements";
         this.text = `
 
-<p>We continue with investigating the <b>forces</b> of <b>serial</b> elements.</p>
-<p>What is the <b>total force</b> $$F$$, given the forces $$F_1$$ and $$F_2$$ of the <b>single springs</b>?</p>
+<p>Our final consideration on springs is how the <b>spring constants</b> of <b>serial</b> elements contribute to a total spring constant.</p>
+<p>For simplicity we use two springs with <b>the same</b> spring constant $$k$$ ($$k1=k2=k$$).</p>
+<p>How does the <b>total force</b> of the two springs depend on the <b>spring constants</b> and the <b>total displacement</b> $$d$$?</p>
             `;
         this.test_cases = [{
             "name": "Spring (k1 = 1 N/m, k2 = 1 N/m)",
@@ -15,34 +16,36 @@ class QuestionSeriesForce extends Question {
             "input": ["Displacement", "Rectangle", 1, 0, 1]
         },
             {
-                "name": "Spring stiff (k1 = 0.5 N/m, k2 = 2 N/m)",
+                "name": "Spring stiff (k1 = 2 N/m, k2 = 2 N/m)",
                 "plot_point": 2,
                 "points": [[0, 0], [1, 1], [1,2]],
-                "elements": [["Spring", 0, 1, 0.5, 1], ["Spring", 1, 2, 2, 1]],
-                "input": ["Displacement", "Rectangle", 1, 0, 1]
+                "elements": [["Spring", 0, 1, 2, 1], ["Spring", 1, 2, 2, 1]],
+                "input": ["Displacement", "Ramp", 1, 0, 1]
             }
         ];
         this.text_finshed = `
-<p>Correct! The <b>forces</b> of <b>serial</b> elements must be <b>the same</b>.</p>
-\\[F = F_1 = F_2\\]
-<p>This is a direct consequence of <b>Newton's third law</b>.</p>
+<p>Great! The spring constant of <b>two equal springs</b> in <b>series</b> is <b>half</b> the spring constant of each spring.</p>
+\\[k_\\mathrm{total} = \\frac{k_1}{2} = \\frac{k_2}{2} \\]
+<p>In general, the spring constants for arbitrary springs in series <b>add up reciprocally</b>.</p>
+\\[\\frac{1}{k_\\mathrm{total}} = \\frac{1}{k_1} + \\frac{1}{k_2} + \\frac{1}{k_3} + \\ldots\\]
         `;
 
-        this.text_allowed_elements = `Use the forces $$F1$$, $$F2$$, the spring constants $$k1$$, $$k2$$,`;
+        this.text_allowed_elements = `Use the total displacement $$d$$, the spring constant $$k$$,`;
     }
 
     allowed_elements (sim, index) {
         let k1 = sim.elements[0].strength;
         let k2 = sim.elements[0].strength;
-        let k = 1/(1/k1+1/k2);
+        let k = k1;//1/(1/k1+1/k2);
         return {
             k : k,
             t: sim.times[index],
 /*            F: sim.dataF[index],*/
+            d: sim.data[index],
             k1: k1,
             k2: k2,
-            F1: sim.dataF[index],
-            F2: sim.dataF[index],
+/*            F1: sim.dataF[index],
+            F2: sim.dataF[index],*/
         }
     }
 
@@ -52,8 +55,7 @@ class QuestionSeriesForce extends Question {
         this.sim = new System();
         this.sim.end_time = 3;
 
-        addInput("k1", v=>this.sim.elements[0].strength = v, this.updateSim.bind(this));
-        addInput("k2", v=>this.sim.elements[1].strength = v, this.updateSim.bind(this));
+        addInput("k", v=>this.sim.elements[0].strength = this.sim.elements[1].strength = v, this.updateSim.bind(this));
         addInput("d", v=>this.sim.external[0].strength = v, this.updateSim.bind(this), 2);
 
         d3.select("#playground_content").append("br")
@@ -72,10 +74,6 @@ class QuestionSeriesForce extends Question {
         this.plot1 = addPlotDisplacement(this, "input");
         this.display = addDisplay(this, 150);
         this.plot1 = addPlotForce(this, "output");
-        addPlot(this, "", "F1 (N)", color_force,
-            ()=>this.sim.dataF)
-        addPlot(this, "", "F2 (N)", color_force,
-            ()=>this.sim.dataF)
         let slider = addSlider(this);
     }
 }

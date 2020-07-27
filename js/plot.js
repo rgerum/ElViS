@@ -96,8 +96,76 @@ class Plot {
     }
     setYlim(min, max) {
         this.y_scale.domain([min, max]);
-        this.y_axis_svg.call(this.y_axis).selectAll("path");
-        this.y_axis_svg.selectAll(".tick").selectAll("text").attr("dx", -10);
+        if(1) {
+            this.ymin = min;
+            this.ymax = max;
+            this.y_axis_svg.call(this.y_axis).selectAll("path");
+            this.y_axis_svg.selectAll(".tick").selectAll("text").attr("dx", -10);
+            var line = d => d3.line().x(d => this.x_scale(d[0])).y(d => this.y_scale(d[1]))(d3.zip(d.x, d.y));
+            this.line_group.selectAll("path").attr("d", line)
+
+            if(this.cursor)
+            this.cursor.selectAll("circle")
+                .attr("cx", d => this.x_scale(d[0]))
+                .attr("cy", d => this.y_scale(d[1]))
+            return;
+        }
+
+        // Update axis and circle position
+        console.log(this.y_axis)
+        this.y_axis_svg.transition().duration(1000).call(this.y_axis)
+
+        var line = d => d3.line().x(d => this.x_scale(d[0])).y(d => this.y_scale(d[1]))(d3.zip(d.x, d.y));
+        this.line_group.selectAll("path").transition().duration(1000).attr("d", line)
+        /*
+        scatter
+            .selectAll("circle")
+            .transition().duration(1000)
+            .attr("cx", function (d) { return x(d.Sepal_Length); } )
+            .attr("cy", function (d) { return y(d.Petal_Length); } )*/
+
+    }
+
+    setYLimAnimated(min, max) {
+        function ease_in_out(n) {
+            var q = .48 - n / 1.04,
+                Q = Math.sqrt(.1734 + q * q),
+                x = Q - q,
+                X = Math.pow(Math.abs(x), 1 / 3) * (x < 0 ? -1 : 1),
+                y = -Q - q,
+                Y = Math.pow(Math.abs(y), 1 / 3) * (y < 0 ? -1 : 1),
+                t = X + Y + .5;
+            return (1 - t) * 3 * t * t + t * t * t;
+        }
+        let plot = this;
+        function changeLimits() {
+            plot.animator.percentage += 0.02;
+            if(plot.animator.percentage > 1)
+                plot.animator.percentage = 1;
+            let f = ease_in_out(plot.animator.percentage)
+            let a = plot.animator.lim1*(1-f) + plot.animator.lim1new*f;
+            let b = plot.animator.lim2*(1-f) + plot.animator.lim2new*f;
+            plot.setYlim(a, b);
+            if(plot.animator.percentage < 1) {
+                setTimeout(changeLimits, 10);
+            }
+            else {
+                plot.animator.running = false;
+            }
+        }
+        if(!this.animator) {
+            this.animator = {running: false};
+        }
+        console.log(this.animator, this.ymin, this.ymax);
+        this.animator.lim1 = this.ymin;
+        this.animator.lim2 = this.ymax;
+        this.animator.lim1new = min;
+        this.animator.lim2new = max;
+        this.animator.percentage = 0;
+        if(!this.animator.running) {
+            this.animator.running = true;
+            setTimeout(changeLimits, 10);
+        }
     }
     setXLabel(label) {
         this.x_axis_svg.selectAll(".label").text(label)
@@ -253,6 +321,7 @@ class Display {
             .attr("fill", "blue").attr("opacity", 0.5)
 
         this.legend_group = undefined;
+        this.sim = undefined;
     }
 
     legend(x, y) {
@@ -319,7 +388,12 @@ class Display {
         )
     }
 
-    setData(datasets, labels) {
+    selectElementCallback(i) {
+
+    }
+
+    setData(datasets, labels, simu) {
+        let sim = simu;
         /*
         this.setXlim(d3.min(datasets, function(d) { return d3.min(d.x); }),
             d3.max(datasets, function(d) { return d3.max(d.x); }));
@@ -360,7 +434,7 @@ class Display {
                                 .attr("stroke-width", 1);
                         })
                         .on("click", function (d) {
-                            selectedElement(i);
+                            display.selectElementCallback(i);
                         })
                         .call(d3.drag()
                             .on("drag", function (d, ii) {
@@ -369,14 +443,14 @@ class Display {
                                 let x = display.scale.invert(d3.event.x), y = display.scale.invert(d3.event.y);
                                 let data = undefined;
                                 if(ii == 2) {
-                                    x = x - d.x1 + sim.points[sim.elements[i].target_ids[1]][1];
+                                    x = x - d.x1 + display.sim.points[display.sim.elements[i].target_ids[1]][1];
                                     y = y - d.y1;
-                                    data = sim.elements[i].draw([[sim.points[sim.elements[i].target_ids[0]][1], 0], [x, y]]);
+                                    data = display.sim.elements[i].draw([[display.sim.points[display.sim.elements[i].target_ids[0]][1], 0], [x, y]]);
                                 }
                                 if(ii == 1) {
-                                    x = x - d.x1 + sim.points[sim.elements[i].target_ids[0]][1];
+                                    x = x - d.x1 + display.sim.points[display.sim.elements[i].target_ids[0]][1];
                                     y = y - d.y1;
-                                    data = sim.elements[i].draw([[x, y], [sim.points[sim.elements[i].target_ids[1]][1], 0]]);
+                                    data = display.sim.elements[i].draw([[x, y], [display.sim.points[display.sim.elements[i].target_ids[1]][1], 0]]);
                                 }
                                 d3.select(this.parentElement.parentElement).select(".element_draw").selectAll("path").data(data.lines)
                                     .attr("d", line).attr("fill", "none").attr("stroke", "red")
@@ -411,32 +485,34 @@ class Display {
                                     return
 
                                 if(this.target_point !== undefined) {
+                                    if (sim.points.length < this.target_point)
+                                        this.target_point = sim.points.length - 0.5;
                                     if(this.target_point % 1 == 0.5) {
                                         this.target_point = Math.ceil(this.target_point);
-                                        sim.insertPoint(this.target_point);
+                                        display.sim.insertPoint(this.target_point);
                                     }
                                     if(this.target_point % 1 == 0) {
-                                        if (sim.points.length > this.target_point) {
+                                        if (display.sim.points.length > this.target_point) {
                                             if (ii == 2) {
-                                                sim.elements[i].target_ids[1] = this.target_point;
+                                                display.sim.elements[i].target_ids[1] = this.target_point;
                                             } else if (ii == 1) {
-                                                sim.elements[i].target_ids[0] = this.target_point;
+                                                display.sim.elements[i].target_ids[0] = this.target_point;
                                             }
-                                            if (sim.elements[i].target_ids[1] < sim.elements[i].target_ids[0]) {
-                                                let [s, e] = sim.elements[i].target_ids;
-                                                sim.elements[i].target_ids = [e, s];
+                                            if (display.sim.elements[i].target_ids[1] < display.sim.elements[i].target_ids[0]) {
+                                                let [s, e] = display.sim.elements[i].target_ids;
+                                                display.sim.elements[i].target_ids = [e, s];
                                             }
-                                            console.log("new targets", sim.elements[i].target_ids);
+                                            console.log("new targets", display.sim.elements[i].target_ids);
                                         }
                                     }
                                 }
                                 display.new_point.attr("r", 0);
                                 display.point_group.selectAll(".point").attr("r", "5px");
-                                sim.removeUnusedPoints();
-                                sim.updateDrawOffsets();
-                                display.setData(sim.draw());
-                                display.setPoints(sim.points, sim);
-                                sim.edited = true;
+                                display.sim.removeUnusedPoints();
+                                display.sim.updateDrawOffsets();
+                                display.setData(display.sim.draw());
+                                display.setPoints(display.sim.points, display.sim);
+                                display.sim.edited = true;
                                 updateSystem();
                             })
                         )
@@ -448,7 +524,9 @@ class Display {
         paths.exit().remove();
     }
 
-    setPoints(dataset, sim) {
+    setPoints(dataset, simu) {
+        let sim = simu;
+
         var paths = this.point_group.selectAll(".point")
             .data(dataset)
 
@@ -536,6 +614,8 @@ class Display {
                             return
 
                         if(this.target_point !== undefined) {
+                            if (sim.points.length < this.target_point)
+                                this.target_point = sim.points.length - 0.5;
                             if(this.target_point % 1 == 0.5) {
                                 this.target_point = Math.ceil(this.target_point);
                                 sim.insertPoint(this.target_point);

@@ -1,3 +1,67 @@
+function draw_black_box(points) {
+    let [start, end] = points;
+    let width = 0.2
+    let start_dist = 0.4
+    let end_dist = 0.4
+    let hole_dist = 0.4
+
+    let start_dist1 = 0.4
+    let end_dist1 = 0.4
+
+    // difference vector
+    let dist = math.subtract(end, start);
+
+    let length = math.norm(dist);
+    let offset = 0;//this.drawoffset;
+    if(length < 0)
+        offset = -0;//this.drawoffset;
+    // ignore 0 elements
+    //if(math.norm(dist) === 0)
+    //    return
+    // normalized normal vector
+    let norm = math.divide([-dist[1], dist[0]], math.norm(dist))
+    // normalized tangential vector
+    let tan = math.divide(dist, math.norm(dist))
+
+    // start at the first position
+    let lines = []
+    let pos = [start]
+    pos.push(math.add(start, math.multiply(tan, start_dist1)))
+    // add the start point with offset
+    pos.push(math.add(start, math.multiply(tan, start_dist1), math.multiply(norm, offset)))
+    let rect = {x: start[0], width:math.norm(dist), y: offset-0.2, height: 0.4};
+    let rect_start = {x: start[0], width:start_dist, y: offset-0.2, height: 0.4};
+    let rect_end = {x: end[0]-end_dist, width:end_dist, y: offset-0.2, height: 0.4};
+
+    // iterate over both parts of the sheath
+    if(this.strength != 0) {
+        for (let dir of [-1, 1]) {
+            // start at the middle
+            pos.push(math.add(start, math.multiply(tan, start_dist), math.multiply(norm, offset)));
+            // go up
+            pos.push(math.add(start, math.multiply(tan, start_dist), math.multiply(norm, (dir * width + offset))));
+            // and along the damper
+            pos.push(math.add(start, dist, math.multiply(tan, -end_dist), math.multiply(norm, dir * width + offset)));
+            // go down
+            pos.push(math.add(start, dist, math.multiply(tan, -end_dist), math.multiply(norm, offset)));
+            pos.push(start);
+            lines.push(pos);
+            pos = [];
+        }
+    }
+    // the middle part of the damper
+    /*
+    pos.push(math.add(start, math.multiply(tan, hole_dist), math.multiply(norm, offset)))
+    pos.push(math.add(start, dist, math.multiply(tan, -start_dist), math.multiply(norm, offset)))
+    */
+
+    pos.push(math.add(end, math.multiply(tan, -end_dist1), math.multiply(norm, offset)));
+    pos.push(math.add(end, math.multiply(tan, -end_dist1)));
+    pos.push(end);
+    lines.push(pos);
+    return {rect:rect, rect_start: rect_start, rect_end: rect_end, lines: lines};
+}
+
 class Spring {
     constructor(start, end, strength, rest) {
         this.strength = strength;
@@ -315,6 +379,8 @@ class Force {
         if(external_protocol === "Ramp") {
             if (this.t_start <= t && t < this.t_end)
                 F = [this.strength*(t-this.t_start)/(this.t_end-this.t_start)];
+            if(t >= this.t_end)
+                F = this.strength;
         }
         let Fx = [[0]];
         let Fy = [[0]];
@@ -353,6 +419,58 @@ class Displacement {
         if(external_protocol === "Ramp") {
             if (this.t_start <= t && t < this.t_end)
                 offset = [this.strength*(t-this.t_start)/(this.t_end-this.t_start)];
+            if(t >= this.t_end)
+                offset = [this.strength];
+        }
+
+        p[this.target_ids[0]] = p0[this.target_ids[0]][1] + offset[0];
+        let Fx = [[0]];
+        let Fy = [[0]];
+        return [[0], Fx, Fy]
+    }
+}
+
+class CatchRelease {
+    constructor(start, strength, t_start, t_end) {
+        this.strength = strength;
+        this.t_start = t_start;
+        this.t_end = t_end;
+        this.target_ids = [start];
+        this.unit = "m";
+    }
+    init(points) {}
+
+    draw(points, t) {
+        return {rect: {x:0,y:0,width:0, height: 0}, lines: []};
+    }
+
+    eval(t, p, p0, external_protocol) {
+        let offset = [1];
+        if(external_protocol === "Rectangle") {
+            if (this.t_start <= t && t < this.t_end)
+                offset = [this.strength];
+        }
+        if(external_protocol === "Delta") {
+            if (this.t_start <= t && t < this.t_start + 0.01) {
+                let F = this.strength;
+                let Fx = [[0]];
+                let Fy = [[0]];
+                return [F, Fx, Fy]
+            }
+        }
+        if(external_protocol === "Theta") {
+            if (this.t_start <= t) {
+                let F = [this.strength];
+                let Fx = [[0]];
+                let Fy = [[0]];
+                return [F, Fx, Fy]
+            }
+        }
+        if(external_protocol === "Ramp") {
+            if (this.t_start <= t && t < this.t_end)
+                offset = [this.strength*(t-this.t_start)/(this.t_end-this.t_start)];
+            if(t >= this.t_end)
+                offset = [this.strength];
         }
 
         p[this.target_ids[0]] = p0[this.target_ids[0]][1] + offset[0];
@@ -695,6 +813,25 @@ class System {
         return elements;
     }
 
+    drawBlackBoxPoints(i) {
+        let points = this.get_points(i);
+        return [points[0], points[this.plot_point]];
+    }
+
+    drawBlackBox(i) {
+        let points = this.get_points(i);
+        return [draw_black_box([[points[0][1], 0], [points[this.plot_point][1], 0]], i*this.h)];
+        let elements = [];
+        for(let element of this.elements) {
+            let p = [];
+            for(let i of element.target_ids) {
+                p.push([points[i][1], 0]);
+            }
+            elements.push(element.draw(p, i*this.h));
+        }
+        return elements;
+    }
+
     drawForces(i) {
         let elements = [];
         let points = this.get_points(i);
@@ -706,6 +843,17 @@ class System {
             elements.push(element.draw(p, i*this.h));
         }
         return elements;
+    }
+
+    init_elements() {
+        let points = this.get_points();
+        for(let element of this.elements) {
+            let p = [];
+            for(let i of element.target_ids) {
+                p.push([points[i][1], 0]);
+            }
+            element.init(p);
+        }
     }
 
 
@@ -755,8 +903,12 @@ class System {
         this.points_trajectory.push(p);
         this.points_force_trajectory.push(f);
         for(let t = this.start_time+this.h; t < this.end_time; t += this.h) {
-            for(let i = 0; i < N; i++)
+            let p_copy = []
+            for(let i = 0; i < N; i++) {
                 p_old[i] = p[i];
+                p_copy[i] = p[i];
+            }
+            p = p_copy;
 
             let F = zeros(N);
             let Fx = zeros(N, N);
@@ -764,7 +916,7 @@ class System {
 
             let all = [this.elements];
             if(no_external === false)
-                all = [this.elements, this.external];
+                all = [this.external, this.elements];
             for(let group of all) {
                 for (let element of group) {
                     let [F_node, Fx_node, Fv_node] = element.eval(t, p, this.points, this.external_protocol);

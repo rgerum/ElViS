@@ -1,11 +1,11 @@
 class QuestionParallelSplit extends Question {
     constructor() {
         super();
-        this.title = "Displacement in parallel Elements";
+        this.title = "Displacement in Parallel Elements";
         this.text = `
-<p>So for two parallel springs, the spring constants add up.</p>
-\\[k = k_1 + k_2\\]
-<p>How is the total displacement $$d$$ related to the displacements $$d_1$$ and $$d_2$$ of the single springs.</p>
+
+<p>Let's analyze in more detail what happens when we deal with elements <b>in parallel</b>.</p>
+<p>How is the <b>total displacement</b> $$d$$ related to the <b>displacements</b> $$d_1$$ and $$d_2$$ of the individual springs?</p>
             `;
         this.test_cases = [{
             "name": "Spring (k1 = 1 N/m, k2 = 1 N/m)",
@@ -22,8 +22,13 @@ class QuestionParallelSplit extends Question {
                 "input": ["Force", "Rectangle", 1, 0, 1]
             }
         ];
+        this.text_finshed = `
+        <p>We have seen that the <b>displacement</b> of an individual element of a group of <b>parallel</b> elements is <b>the same</b> as the total
+displacement.</p>
+\\[d = d_1 = d_2\\]
+        `;
 
-        this.text_allowed_elements = `Use, the spring constants $$k1$$, $$k2$$, the displacements $$d1$$, $$d2$$,`;
+        this.text_allowed_elements = `Use the spring constants $$k1$$, $$k2$$, the displacements $$d1$$, $$d2$$,`;
     }
 
     allowed_elements (sim, index) {
@@ -46,7 +51,7 @@ class QuestionParallelSplit extends Question {
 
         addInput("k1", v=>this.sim.elements[0].strength = v, this.updateSim.bind(this));
         addInput("k2", v=>this.sim.elements[1].strength = v, this.updateSim.bind(this));
-        addInput("F", v=>this.sim.external[0].strength = v, this.updateSim.bind(this));
+        addInput("F", v=>this.sim.external[0].strength = v, this.updateSim.bind(this), 2);
 
         d3.select("#playground_content").append("br")
         d3.select("#playground_content").append("br")
@@ -56,7 +61,7 @@ class QuestionParallelSplit extends Question {
             "plot_point": 1,
             "points": [[0, 0], [1, 1]],
             "elements": [["Spring", 0, 1, 1, 1], ["Spring", 0, 1, 1, 1]],
-            "input": ["Displacement", "Rectangle", 1, 0, 1]
+            "input": ["Force", "Rectangle", 2, 0, 1]
         });
         this.sim.updateDrawOffsets();
         this.sim.simulateOverdamped();

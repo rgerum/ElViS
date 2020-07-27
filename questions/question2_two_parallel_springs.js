@@ -3,9 +3,12 @@ class QuestionTwoSpringsParallel extends Question {
         super();
         this.title = "Two Parallel Springs";
         this.text = `
-<p>Great, you found out that a spring gives a linear response proportional to the stiffness.</p>
-\\[F = d\\cdot k\\]
-<p>But what if we have a more complicated system made from two springs in parallel?</p>
+
+<p>Let's have a look at a more complicated system made from <b>two springs in parallel</b>, which means they are connected side-by-side.</p>
+
+<p>Again, use the <b>virtual lab</b> to play around with the parameters.</p>
+
+<p>How can the <b>total force</b> $$F$$ be calculated from the <b>total displacement</b> $$d$$ and the individual <b>spring constants</b> $$k_1$$ and $$k_2$$?</p>
             `;
         this.test_cases = [{
             "name": "Spring (k1 = 1 N/m, k2 = 1 N/m)",
@@ -22,8 +25,12 @@ class QuestionTwoSpringsParallel extends Question {
                 "input": ["Displacement", "Rectangle", 1, 0, 1]
             }
         ];
+        this.text_finshed = `
+        <p>Correct! For <b>parallel springs</b>, the spring constants <b>add up</b>.</p>
+\\[k = k_1 + k_2 + \\ldots\\]
+        `;
 
-        this.text_allowed_elements = `Use, the spring constants $$k1$$, $$k2$$, the displacement $$d$$`;
+        this.text_allowed_elements = `Use the spring constants $$k1$$, $$k2$$, the displacement $$d$$`;
     }
 
     allowed_elements (sim, index) {

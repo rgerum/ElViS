@@ -12,7 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js" integrity="sha384-y23I5Q6l+B6vatafAwxRu/0oK/79VlbSz7Q9aiSZUvyWYIYsd+qj+o24G5ZU2zJz" crossorigin="anonymous"></script>
 
     <!-- To automatically render math in text elements, include the auto-render extension: -->
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js" integrity="sha384-kWPLUVMOks5AQFrykwIup5lo0m3iMkkHrD0uJ4H5cjeGihAutqP0yW0J6dpFiVkI" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js" integrity="sha384-kWPLUVMOks5AQFrykwIup5lo0m3iMkkHrD0uJ4H5cjeGihAutqP0yW0J6dpFiVkI" crossorigin="anonymous"></script>
 
     <script src="https://d3js.org/d3.v5.min.js"></script>
 
@@ -26,6 +26,14 @@
     <script src="questions/question3_parallel_split.js"></script>
     <script src="questions/question4_parallel_force.js"></script>
     <script src="questions/question5_series_displacement.js"></script>
+    <script src="questions/question6_series_force.js"></script>
+    <script src="questions/question7_series_spring.js"></script>
+    <script src="questions/question8_dashpot.js"></script>
+    <script src="questions/question9_dashpot_parallel.js"></script>
+    <script src="questions/question10_dashpot_series.js"></script>
+    <script src="questions/question11_maxwell_body.js"></script>
+    <script src="questions/question12_voigt_body.js"></script>
+    <script src="questions/question13_hill.js"></script>
     <style>
         .button {
             display: inline-block;
@@ -420,6 +428,7 @@
 <body>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+        if(renderMathInElement)
         renderMathInElement(
             document.body,
             {
@@ -434,8 +443,8 @@
 </script>
 
 <header class="w3-container w3-center w3-padding-32">
-    <h1><b>ElViS - Storymode</b></h1>
-    <p>Learning the contepts of <span class="w3-tag">elastic-viscose</span> systems.</p>
+    <h1><b>ElViS — Lesson</b></h1>
+    <p>Learning the concepts of <span class="w3-tag">elastic-viscous</span> systems.</p>
 </header>
 
 <div style="min-width:600px; margin:0 auto; display: grid;  justify-content: center;">
@@ -443,15 +452,15 @@
     <div id="box_welcome"  class="w3-card-4 w3-margin w3-white">
 
         <div class="w3-container">
-            <h3><b>Welcome to the <b>ElViS</b> lesson!</b></h3>
+            <h3 id="info_heading"><b>Welcome to the <b>ElViS</b> lesson!</b></h3>
+            <div id="info_text">
             <p><b>ElViS</b> will teach you the basics about visco-elastic systems.</p>
-            <p>In the playground box, you can experiment with the system</p>
-
+            </div>
             <p></p>
 
             <div class="w3-row">
                 <div class="w3-col m8 s12">
-                    <p><button class="w3-button w3-padding-large w3-white w3-border" onclick="NextQuestion();"><b>START »</b></button></p>
+                    <p><button class="w3-button w3-padding-large w3-white w3-border" id=button_next_question onclick="NextQuestion();"><b>CONTINUE »</b></button></p>
                 </div>
             </div>
             <br/>
@@ -466,13 +475,17 @@
             <h5>Question, <span class="w3-opacity" id="question_index">1</span></h5>
             <p id="question_text"></p>
             <p style="text-align: center"><span id="question_input">F</span>=<input id="equation" type="text" value=""></p>
-            <div class="info_box">
+            <div class="info_box" id="valid_inputs_box">
                 <span id="question_text_allowed_elements">
 
                 </span>
                 <span>
-                    and the operators <b>+</b>, <b>-</b>, <b>*</b>, <b>/</b>, <b>(</b>, <b>)</b>.
+                     numbers, and the operators <b>+</b>, <b>-</b>, <b>*</b>, <b>/</b>, <b>(</b>, <b>)</b>.
                 </span>
+            </div>
+
+            <div class="info_box" id="error_text" style="background: #cd4a4a; margin-top: 10px; display: none">
+
             </div>
 
             <div class="w3-row">
@@ -489,11 +502,12 @@
 
         <div class="w3-container">
             <h3><b>Tests</b></h3>
+            <p>Evaluating <b style="color: rgb(255, 127, 14)">your answer</b> for different <b style="color: rgb(31, 119, 180)">test systems</b>.</p>
             <div id="test_displays"></div>
 
             <div class="w3-row">
                 <div class="w3-col m8 s12">
-                    <p><button class="w3-button w3-padding-large w3-white w3-border" onclick="NextQuestion();"><b>CONTINUE »</b></button></p>
+                    <p><button id="button_next" class="w3-button w3-padding-large w3-white w3-border" onclick="EndQuestion();"><b>CONTINUE »</b></button></p>
                 </div>
                 <div class="w3-col m4 w3-hide-small">
                     <p><span class="w3-padding-large w3-right"><b>Passed &nbsp;</b> <span class="w3-tag" id="tests_passed">0/0</span></span></p>
@@ -505,11 +519,11 @@
     </div>
 
 </div>
-<div style="grid-column: 2; max-width: 700px">
+<div id=playground_container style="grid-column: 2; max-width: 735px; display: none">
     <div class="w3-card-4 w3-margin w3-white">
 
         <div class="w3-container">
-            <h3><b>Playground</b></h3>
+            <h3><b>Virtual Lab</b></h3>
             <div id="playground_content">
 
             </div>
@@ -547,16 +561,17 @@
               `
         }
 
-        function addInput(name, callback1, callback2) {
-            d3.select("#playground_content").append("span").each(
+        function addInput(name, callback1, callback2, start_value=1) {
+            return d3.select("#playground_content").append("span").each(
                 function() {
                     d3.select(this).append("span").text(name+" = ");
-                    d3.select(this).append("input").attr("type", "number").attr("value", 1)
-                        .attr("step", 0.1)
+                    d3.select(this).append("input").attr("type", "number").attr("value", start_value).attr("min", 1)
+                        .attr("step", 1)
                         .on("input", function() {
                             callback1(parseFloat(this.value));
                             callback2();
                         })
+                    d3.select(this).append("span").text(" ");
                 }
             )
         }
@@ -593,8 +608,8 @@
 
             function update(sim) {
                 plot1.setXlim(sim.times[0], sim.times[sim.times.length - 1]);
-                plot1.setYlim(d3.min(sim.dataF), d3.max(sim.dataF));
                 plot1.setData([{x: sim.times, y: sim.dataF}], ["force"])
+                plot1.setYLimAnimated(d3.min(sim.dataF), d3.max(sim.dataF));
             }
             function slider_changed(sim, d) {
                 plot1.setCursor([[sim.times[d], sim.dataF[d]]]);
@@ -620,8 +635,8 @@
 
             let sim = parent.sim;
             plot1.setXlim(sim.times[0], sim.times[sim.times.length - 1]);
-            plot1.setYlim(d3.min(sim.data), d3.max(sim.data));
             plot1.setData([{x: sim.times, y: sim.data}], ["displacement"])
+            plot1.setYlim(d3.min(sim.data), d3.max(sim.data));
 
             plot1.y_axis.ticks(3)
             plot1.y_axis_svg.call(plot1.y_axis)
@@ -632,8 +647,8 @@
 
             function update(sim) {
                 plot1.setXlim(sim.times[0], sim.times[sim.times.length - 1]);
-                plot1.setYlim(d3.min(sim.data), d3.max(sim.data));
-                plot1.setData([{x: sim.times, y: sim.data}], ["displacement"])
+                plot1.setData([{x: sim.times, y: sim.data}], ["displacement"]);
+                plot1.setYLimAnimated(d3.min(sim.data), d3.max(sim.data));
             }
             function slider_changed(sim, d) {
                 plot1.setCursor([[sim.times[d], sim.data[d]]]);
@@ -662,8 +677,8 @@
             let sim = parent.sim;
             plot1.setXlim(sim.times[0], sim.times[sim.times.length - 1]);
             let data = get_data();
-            plot1.setYlim(d3.min(data), d3.max(data));
             plot1.setData([{x: sim.times, y: data}], ["displacement"])
+            plot1.setYlim(d3.min(data), d3.max(data));
 
             plot1.y_axis.ticks(3)
             plot1.y_axis_svg.call(plot1.y_axis)
@@ -675,8 +690,8 @@
             function update(sim) {
                 plot1.setXlim(sim.times[0], sim.times[sim.times.length - 1]);
                 data = get_data();
-                plot1.setYlim(d3.min(data), d3.max(data));
                 plot1.setData([{x: sim.times, y: data}], ["displacement"])
+                plot1.setYLimAnimated(d3.min(data), d3.max(data));
             }
             function slider_changed(sim, d) {
                 plot1.setCursor([[sim.times[d], data[d]]]);
@@ -686,22 +701,52 @@
             return plot1
         }
 
-        function addDisplay(parent) {
+        function addDisplay(parent, width=undefined, black=false) {
             let scale = 3;
             let svg = d3.select("#playground_content").append("svg").attr("width", 300).attr("height", 20);
+            width = width || 30*scale;
+            let max = 2.8/(30*scale)*width - 0.4;
             let display = new Display(svg, {
-                width: 30 * scale,
+                width: width,
                 height: 30 * scale,
-                xlim: [-0.4, 2.4],
+                xlim: [-0.4, max],
                 interactive: false
             });
-            display.setData(parent.sim.draw());
-            display.setPoints(parent.sim.points, parent.sim);
+            if(black) {
+
+            }
+            else {
+                display.setData(parent.sim.draw(), parent.sim);
+                display.setPoints(parent.sim.points, parent.sim);
+            }
 
             parent.update_slider_callbacks.push(function (sim, d) {
-                display.setData(sim.draw(d));
-                display.setPoints(sim.get_points(d), sim);
+                if(black) {
+                    display.setData(sim.drawBlackBox(d));
+                    display.setPoints(sim.drawBlackBoxPoints(d), sim);
+                }
+                else {
+                    display.setData(sim.draw(d));
+                    display.setPoints(sim.get_points(d), sim);
+                }
             })
+            return svg;
+        }
+        function addInputDisplay(parent, width=undefined) {
+            let scale = 5;
+            let svg = d3.select("#question_text").append("svg").attr("width", 300).attr("height", 20);
+            width = width || 30*scale;
+            let max = 2.8/(30*scale)*width - 0.4;
+            let display = new Display(svg, {
+                width: width,
+                height: 30 * scale,
+                xlim: [-0.4, max],
+                interactive: true
+            });
+            display.sim = parent.sim2;
+            display.setData(parent.sim2.draw(), parent.sim2);
+            display.setPoints(parent.sim2.points, parent.sim2);
+            return display;
         }
 
         function addSlider(parent) {
@@ -724,36 +769,58 @@
             slider.play();
         }
 
-        let questions = [
-            new QuestionOneSpring(),
-            new QuestionTwoSpringsParallel(),
-            new QuestionParallelSplit(),
-            new QuestionParallelForces(),
-            new QuestionSeriesDisplacement()
+        let questions = {
+            "Rana_mercurii": new QuestionOneSpring(),
+            "Gastrophryne_carolinensis": new QuestionTwoSpringsParallel(),
+            "Lithobates_sylvaticus": new QuestionParallelSplit(),
+            "Anaxyrus_nelsoni": new QuestionParallelForces(),
+            "Xenopus_laevis": new QuestionSeriesDisplacement(),
+            "Anaxyrus_retiformis": new QuestionSeriesForce(),
+            "Litoria_gilleni": new QuestionSeriesSpring(),
+            "Pseudacris_clarkii": new QuestionDashpot(),
+            "Lithobates_catesbeianus": new QuestionDashpotParallel(),
+            "Rana_draytonii": new QuestionDashpotSeries(),
+            "Litoria_rheocola": new QuestionMaxwellBody(),
+            "Rana_aurora": new QuestionVoigtBody(),
+            "Walter": new QuestionHill(),
             //question_two_parallel_springs
-        ];
+        };
+
+        function indexToTag(index) {
+            return Object.keys(questions)[index];
+        }
+        function tagToIndex(tag) {
+            return Object.keys(questions).indexOf(tag);
+        }
 
         let question_index = -1;
         let question = undefined;
 
         window.onpopstate = function(event) {
+            console.log("popstate", event);
             question_index = event.state["question"];
             StartQuestion();
         }
 
         const urlParams = new URLSearchParams(window.location.search);
         if(urlParams.get('question') !== null) {
-            question_index = parseInt(urlParams.get('question'));
-            StartQuestion();
+            question_index = tagToIndex(urlParams.get('question'));
+            if(question_index != -1)
+                StartQuestion();
         }
 
         function StartQuestion() {
-            history.pushState({question: question_index}, "Question "+question_index, "?question="+question_index)
+            d3.select(d3.select("#question_input").node().parentNode).style("display", "block");
+            d3.select("#valid_inputs_box").style("display", "block");
+
+            if(!(history.state && history.state.question == question_index))
+                history.pushState({question: question_index}, "Question "+question_index, "?question="+indexToTag(question_index))
             d3.select("#box_welcome").style("display", "none");
             d3.select("#box_question").style("display", "block");
-            d3.select("#box_tests").style("display", "block");
+            d3.select("#box_tests").style("display", "none");
+            d3.select("#playground_container").style("display", "block");
 
-            question = questions[question_index];
+            question = questions[indexToTag(question_index)];
             d3.select("#question_title").html(question.title);
             d3.select("#question_index").text(question_index+1);
             d3.select("#question_text").html(question.text);
@@ -777,7 +844,38 @@
                     ]
                 }
             );
+            //EndQuestion();
+        }
+        window.addEventListener("keydown", function (e) {
+            console.log(e.code, e.ctrlKey)
+            if(e.code == "KeyK" && e.ctrlKey) {
+                EndQuestion();
+                e.preventDefault();
+            }
+        });
+        function EndQuestion() {
+            d3.select("#button_next_question").style("display", "inline");
+            d3.select("#info_text").html(question.text_finshed);
+            d3.select("#info_heading").html("");
+            if(window.renderMathInElement)
+                renderMathInElement(
+                    document.getElementById("info_text"),
+                    {
+                        delimiters: [
+                            {left: "$$", right: "$$", display: false},
+                            {left: "\\[", right: "\\]", display: true},
+                            {left: "\\(", right: "\\)", display: false}
+                        ]
+                    }
+                );
 
+            d3.select("#box_welcome").style("display", "block");
+            d3.select("#box_question").style("display", "none");
+            d3.select("#box_tests").style("display", "none");
+            d3.select("#playground_container").style("display", "none");
+            d3.select("#error_text").style("display", "none");
+
+            question.fill_answer();
         }
         //StartQuestion();
         function NextQuestion() {
@@ -786,6 +884,20 @@
         }
 
         function evaluateFormula() {
+            d3.select("#error_text").style("display", "none");
+            d3.select("#box_tests").style("display", "block");
+
+            d3.select("#test_displays").selectAll("svg").remove();
+            d3.select("#test_displays").selectAll("h5").remove();
+            d3.select("#test_displays").selectAll("p").remove();
+
+            let test_index = 0;
+            let passed_count = 0;
+
+            if(question.question_type === "system") {
+
+            }
+
             let text = document.getElementById("equation").value;
 
             let sim = new System();
@@ -794,27 +906,34 @@
             sim.simulateOverdamped();
 
             let template = create_context_function_template(text, question.allowed_elements(sim, 0));
-            let user_function = Function(template)();
+            let user_function = undefined
 
             try {
+                user_function = Function(template)();
                 user_function(question.allowed_elements(sim, 0))
             }
             catch (e) {
-                alert(e);
+                d3.select("#error_text").style("display", "block").text(e);
+                return;
             }
-
-            d3.select("#test_displays").selectAll("svg").remove();
-            d3.select("#test_displays").selectAll("h5").remove();
 
             let resulting_d = undefined;
 
-            let test_index = 0;
-            let passed_count = 0;
             for(let test_case of question.test_cases) {
                 test_index += 1;
                 let sim = new System();
                 sim.setData(test_case);
                 sim.updateDrawOffsets();
+
+                question.callback_before_test(sim);
+                try {
+                    question.callback_before_test(sim);
+                }
+                catch (e) {
+                    d3.select("#error_text").style("display", "block").text(e);
+                    return;
+                }
+
                 sim.simulateOverdamped();
 
                 let check_force = sim.external[0].constructor.name === "Displacement"
@@ -822,6 +941,7 @@
                 let scale = 3;
                 let heading = d3.select("#test_displays").append("h5")
                 let svg = d3.select("#test_displays").append("svg").attr("width", 300).attr("height", 20);
+                /*
                 let display = new Display(svg, {
                     width: 30 * scale,
                     height: 30 * scale,
@@ -830,6 +950,7 @@
                 });
                 display.setData(sim.draw());
                 display.setPoints(sim.points, sim);
+                */
 
                 let plot1 = new Plot(d3.select("#test_displays").append("svg"), {
                     xlabel: "time (s)",
@@ -848,23 +969,23 @@
                 let evaluated_displacement = [];
                 let error = 0;
                 for (let index in sim.times) {
-                    try {
+                    //try {
                         resulting_d = user_function(question.allowed_elements(sim, index));
                         console.log(resulting_d, "resulting_d")
                         if(isNaN(resulting_d))
                             throw "Expression returns undefined."
-                    } catch (e) {
-                        alert(e);
+                    /*} catch (e) {
+                        d3.select("#error_text").style("display", "block").text(e);
                         resulting_d = NaN;
                         break;
-                    }
+                    }*/
                     index = parseInt(index);
                     if(!check_force)
                         error += Math.abs(resulting_d - (sim.points_trajectory[index][sim.plot_point] - sim.points_trajectory[0][sim.plot_point]));
                     else {
-                        if (sim.dataF[index + 1] !== undefined)
-                            error += Math.abs(resulting_d - sim.dataF[index + 1]);
-                        console.log(index, resulting_d, sim.dataF[index], sim.dataF[index + 1], error);
+                        //if (sim.dataF[index + 1] !== undefined)
+                        error += Math.abs(resulting_d - sim.dataF[index]);
+                        //console.log(index, resulting_d, sim.dataF[index], sim.dataF[index + 1], error);
                     }
                     evaluated_displacement.push(resulting_d)
                 }
@@ -898,13 +1019,22 @@
 
                 let text_result = "";
                 if(error < 0.001) {
-                    text_result = "<span style='color: #00FF00'>passed</span>";
+                    text_result = "<span style='color: #41a541'>passed</span>";
                     passed_count += 1;
                 }
                 else
                     text_result = "<span style='color: #FF0000'>failed</span>";
                 heading.html(`Test ${test_index}, <span class="w3-opacity">${test_case.name}</span> ${text_result}`);
             }
+            if(passed_count >= test_index) {
+                d3.select("#test_displays").append("p").text("Great, your answer passed all the tests!").style("color", "#41a541").style("font-weight", "bold")
+                d3.select("#button_next").style("display", "inline");
+            }
+            else {
+                d3.select("#test_displays").append("p").text("Oh no, your answer did not pass all the tests, give it another try.").style("color", "red").style("font-weight", "bold")
+                d3.select("#button_next").style("display", "none");
+            }
+
             d3.select("#tests_passed").text(`${passed_count}/${test_index}`);
         }
     </script>

@@ -1,12 +1,11 @@
 class QuestionParallelForces extends Question {
     constructor() {
         super();
-        this.title = "Force for parallel Elements";
+        this.title = "Force for Parallel Elements";
         this.text = `
-<p>We have seen that the displacement of an individual element of a group of parallel elements is the same as the total
-displacement.</p>
-\\[d = d_1 = d_2\\]
-<p>What about the forces of the single elements? How do these forces $$F_1$$ and $$F_2$$ relate to the total force $$F$$?</p>
+
+<p>Let's investigate the <b>forces</b> of individual elements in <b>parallel arrangements</b>.</p>
+ <p>How do these <b>forces</b> $$F_1$$ and $$F_2$$ relate to the <b>total force</b> $$F$$?</p>
             `;
         this.test_cases = [{
             "name": "Spring (k1 = 1 N/m, k2 = 1 N/m)",
@@ -23,9 +22,14 @@ displacement.</p>
                 "input": ["Displacement", "Rectangle", 1, 0, 1]
             }
         ];
+        this.text_finshed = `
+<p>Nice! We found that the <b>forces</b> of <b>parallel elements add up</b>.</p>
+\\[F = F_1 + F_2 + \\ldots\\]
+        `;
 
-        this.text_allowed_elements = `Use, the forces $$F1$$, $$F2$$, the spring constants $$k1$$, $$k2$$,`;
+        this.text_allowed_elements = `Use the forces $$F1$$, $$F2$$, the spring constants $$k1$$, $$k2$$,`;
     }
+
 
     allowed_elements (sim, index) {
         return {

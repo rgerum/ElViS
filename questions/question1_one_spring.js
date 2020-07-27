@@ -1,10 +1,12 @@
 class QuestionOneSpring extends Question {
     constructor() {
         super();
-        this.title = "One Spring";
+        this.title = "Single Spring";
         this.text = `
-<p>The first element we need to build visco-elastic systems, is the <b>spring</b> the elastic element.</p>
-<p>In the <b>playground</b> you can experiment with this element and derive a formula for the force of such an element.</p>
+<p>The first element we need to build visco-elastic systems is the <b>spring</b>, the elastic element.</p>
+<p>In the <b>virtual lab</b> you can experiment with a spring. Change the <b>spring constant $$k$$</b> and elongate the spring to different <b>displacements $$d$$</b>.</p>
+ 
+<p>Observe the output <b>force $$F$$</b> and derive a formula connecting $$F$$, $$k$$ and $$d$$.</p>
 <p>What force $$F$$ does a spring with a <b>spring constant</b> $$k$$ create when <b>displaced</b> by $$d$$?</p>
 `;
         this.test_cases = [{
@@ -36,8 +38,13 @@ class QuestionOneSpring extends Question {
                 "input": ["Displacement", "Ramp", 1, 0, 1]
             }
         ];
+        this.text_finshed = `
+        <p>Great, you found that a spring gives a <b>linear response</b> proportional to its spring constant $$k$$.</p>
+\\[F = k\\cdot d\\]
+<p>This relationship is called <b>Hooke's law</b>.</p>
+        `;
 
-        this.text_allowed_elements = `Use, the spring constant \\(k\\), the displacement \\(d\\),`;
+        this.text_allowed_elements = `Use the spring constant \\(k\\), the displacement \\(d\\),`;
     }
 
     allowed_elements (sim, index) {
