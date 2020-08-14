@@ -485,7 +485,7 @@ class Display {
                                     return
 
                                 if(this.target_point !== undefined) {
-                                    if (sim.points.length < this.target_point)
+                                    if (display.sim.points.length < this.target_point)
                                         this.target_point = sim.points.length - 0.5;
                                     if(this.target_point % 1 == 0.5) {
                                         this.target_point = Math.ceil(this.target_point);

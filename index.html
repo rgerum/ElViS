@@ -349,7 +349,8 @@
         sim.updateDrawOffsets();
         let scale = 3;
         let display = new Display(svg, {width: 30*scale, height: 8*scale, xlim:[-0.4, 2.4], interactive:false});
-        display.setData(sim.draw());
+        display.sim = sim;
+        display.setData(sim.draw(), sim);
         display.setPoints(sim.points, sim);
     }
 
@@ -382,7 +383,8 @@
     //plot1.setData([{x: sim.times, y: sim.data}, {x: sim.times, y:sim.dataF}], ["displacement", "force"])
 
     sim.updateDrawOffsets();
-    display.setData(sim.draw());
+    display.sim = sim;
+    display.setData(sim.draw(), sim);
     display.setPoints(sim.points, sim);
 
     document.getElementById("force_strength").value = sim.external[0].strength;
@@ -445,6 +447,7 @@
 
         display.selectElement(i);
     }
+    display.selectElementCallback = selectedElement;
     function deselectElement() {
         display.selectElement(undefined);
         selected_element_id = undefined;
@@ -555,7 +558,8 @@
         }
 
         sim.simulateOverdamped(has_force_generator);
-        display.setData(sim.draw());
+        display.sim = sim;
+        display.setData(sim.draw(), sim);
         display.setPoints(sim.points, sim);
         if(sim.error !== undefined) {
             document.getElementById("error").innerText = "Error: some points of the system have undefined positions."
@@ -595,7 +599,8 @@
     slider.setRange(0, sim.end_time/sim.h-1);
     slider.onValueChanged = function(d) {
         d = parseInt(d);
-        display.setData(sim.draw(d));
+        display.sim = sim;
+        display.setData(sim.draw(d), "", sim);
         display.setPoints(sim.get_points(d), sim);
         plot1.setCursor([[sim.times[d], sim.data[d]]]);
         plot2.setCursor([[sim.times[d], sim.dataF[d]]]);
