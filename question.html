@@ -189,6 +189,15 @@
             padding: 1px 10px;
         }
 
+        .level {
+            border: 1.5px solid #484848;
+            width: 15px;
+            height: 15px;
+            display: inline-block;
+            border-radius: 20px;
+            margin: 0 2px;
+        }
+
     </style>
 
     <style>
@@ -448,6 +457,9 @@
     <h1><b><img src="ElViSLogo.svg" alt="ElViS" title="ElViS" style="height: 40px; margin-top: -8px; margin-right: 5px;"/> — Lesson</b></h1>
     <p>Learning the concepts of <span class="w3-tag">elastic-viscous</span> systems.</p>
 </header>
+
+<div id="level_buttons" style="text-align: center">
+</div>
 
 <div style="min-width:600px; margin:0 auto; display: grid;  justify-content: center;">
 <div style="grid-column: 1; max-width: 400px">
@@ -787,6 +799,8 @@
             "Walter": new QuestionHill(),
             //question_two_parallel_springs
         };
+        d3.select("#level_buttons").selectAll("span").data(Object.keys(questions))
+            .enter().append("span").attr("class", "level")//.attr("title", d=>questions[d].title)
 
         function indexToTag(index) {
             return Object.keys(questions)[index];
@@ -795,6 +809,7 @@
             return Object.keys(questions).indexOf(tag);
         }
 
+        let max_question_index = -1;
         let question_index = -1;
         let question = undefined;
 
@@ -806,17 +821,37 @@
 
         const urlParams = new URLSearchParams(window.location.search);
         if(urlParams.get('question') !== null) {
-            question_index = tagToIndex(urlParams.get('question'));
-            if(question_index != -1)
+            max_question_index = tagToIndex(urlParams.get('question'));
+            if(max_question_index != -1) {
+                let i = parseInt(urlParams.get('i'))
+                if(i === undefined || isNaN(i))
+                    question_index = max_question_index;
+                else
+                    question_index = i;
                 StartQuestion();
+            }
         }
 
         function StartQuestion() {
+            if(max_question_index < question_index)
+                max_question_index = question_index;
+            d3.select("#level_buttons").selectAll("span").each(
+                function(d, i) {
+                    let span = d3.select(this);
+                    span.style("background", undefined).style("cursor", "auto")
+                    if(i <= max_question_index)
+                        span.style("background", "gray").attr("title", (d)=>questions[d].title).style("cursor", "pointer")
+                            .on("click", ()=>{question_index=i; StartQuestion();})
+                    if(i == question_index)
+                        span.style("background", "lightgray")
+                }
+            )
+
             d3.select(d3.select("#question_input").node().parentNode).style("display", "block");
             d3.select("#valid_inputs_box").style("display", "block");
 
             if(!(history.state && history.state.question == question_index))
-                history.pushState({question: question_index}, "Question "+question_index, "?question="+indexToTag(question_index))
+                history.pushState({question: question_index}, "Question "+question_index, "?question="+indexToTag(max_question_index)+"&i="+question_index)
             d3.select("#box_welcome").style("display", "none");
             d3.select("#box_question").style("display", "block");
             d3.select("#box_tests").style("display", "none");
