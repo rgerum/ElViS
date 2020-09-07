@@ -935,7 +935,7 @@
 
             }
 
-            let text = document.getElementById("equation").value;
+            let text = document.getElementById("equation").value.replace(/,/g, ".");
 
             let sim = new System();
             sim.setData(question.test_cases[0]);
