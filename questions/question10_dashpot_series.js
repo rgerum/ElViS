@@ -5,18 +5,18 @@ class QuestionDashpotSeries extends Question {
         this.text = `
 
 <p>Now we look at two dashpots in series. Recall how spring constants add up in series.</p>
-<p>How does the total force depend on the <b>viscosities</b> $$\\gamma_1$$, $$\\gamma_2$$ and the <b>velocity</b> $$v$$?</p>
+<p>How does the total force depend on the <b>viscosities</b> $$D_1$$, $$D_2$$ and the <b>velocity</b> $$v$$?</p>
 <p>You might want to use a pen and paper to derive the formula.</p>
             `;
         this.test_cases = [{
-            "name": "Dashpot (gamma = 1 Ns/m, gamma = 1 Ns/m)",
+            "name": "Dashpot (D = 1 Ns/m, D = 1 Ns/m)",
             "plot_point": 2,
             "points": [[0, 0], [1, 1], [1, 2]],
             "elements": [["Dashpot", 0, 1, 1, 1], ["Dashpot", 1, 2, 1, 1]],
             "input": ["Displacement", "Ramp", 1, 0, 1]
         },
             {
-                "name": "Dashpot (gamma = 0.5 Ns/m, gamma = 2 Ns/m)",
+                "name": "Dashpot (D = 0.5 Ns/m, D = 2 Ns/m)",
                 "plot_point": 2,
                 "points": [[0, 0], [1, 1], [1, 2]],
                 "elements": [["Dashpot", 0, 1, 0.5, 1], ["Dashpot", 1, 2, 2, 1]],
@@ -25,16 +25,16 @@ class QuestionDashpotSeries extends Question {
         ];
         this.text_finshed = `
 <p>The viscosities of <b>dashpots</b> in <b>series</b> <b>add up reciprocally</b>, just like the spring constants of springs in series.</p>
-\\[\\frac{1}{\\gamma} = \\frac{1}{\\gamma_1} + \\frac{1}{\\gamma_2} + \\ldots\\]
+\\[\\frac{1}{D} = \\frac{1}{D_1} + \\frac{1}{D_2} + \\ldots\\]
         `;
 
-        this.text_allowed_elements = `Use the velocity $$v$$, the viscosities $$gamma1$$, $$gamma2$$,`;
+        this.text_allowed_elements = `Use the velocity $$v$$, the viscosities $$D1$$, $$D2$$,`;
     }
 
     allowed_elements (sim, index) {
         return {
-            gamma1 : sim.elements[0].strength,
-            gamma2 : sim.elements[1].strength,
+            D1 : sim.elements[0].strength,
+            D2 : sim.elements[1].strength,
             t: sim.times[index],
             F: sim.dataF[index],
             v: sim.dataF[index]*(1/sim.elements[0].strength+1/sim.elements[1].strength),
@@ -47,8 +47,8 @@ class QuestionDashpotSeries extends Question {
         this.sim = new System();
         this.sim.end_time = 3;
 
-        addInput("gamma1", v=>this.sim.elements[0].strength = v, this.updateSim.bind(this));
-        addInput("gamma2", v=>this.sim.elements[1].strength = v, this.updateSim.bind(this));
+        addInput("D1", v=>this.sim.elements[0].strength = v, this.updateSim.bind(this));
+        addInput("D2", v=>this.sim.elements[1].strength = v, this.updateSim.bind(this));
         addInput("v", v=>this.sim.external[0].strength = v, this.updateSim.bind(this), 2);
 
         d3.select("#playground_content").append("br")

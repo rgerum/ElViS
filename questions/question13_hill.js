@@ -167,7 +167,7 @@ In the animation you see the resulting course of muscle length over time as Hill
         }
 /*
         let p = d3.select("#info_text").append("p");
-        renderMathInElement(p.append("span").html(`$$\\frac{k}{\\gamma} = $$ `).node(), {delimiters: [{left: "$$", right: "$$", display: false}]});
+        renderMathInElement(p.append("span").html(`$$\\frac{k}{D} = $$ `).node(), {delimiters: [{left: "$$", right: "$$", display: false}]});
         p.append("span").html(`xx`).attr("id", "ratio").style("width", "150px").style("display", "inline-block")
 
         p.append("span").html(` <input type="range" oninput="sliderRatioChanged();" min="0" max="100" value="50" class="slider" id="myRange">`);
@@ -249,7 +249,7 @@ In the animation you see the resulting course of muscle length over time as Hill
         this.input_value = this.input.append("input").style("width", "40px")
 
         this.input2 = d3.select("#question_text").append("span");
-        this.input_text2 = this.input2.append("span").text("Dashpot $$\\gamma$$ = ");
+        this.input_text2 = this.input2.append("span").text("Dashpot $$D$$ = ");
         this.input_value2 = this.input2.append("input").style("width", "40px")
 */
         this.sim2 = new System();

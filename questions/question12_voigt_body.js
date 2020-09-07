@@ -159,7 +159,7 @@ class QuestionVoigtBody extends Question {
         }
 
         let p = d3.select("#info_text").append("p");
-        renderMathInElement(p.append("span").html(`$$\\frac{k}{\\gamma} = $$ `).node(), {delimiters: [{left: "$$", right: "$$", display: false}]});
+        renderMathInElement(p.append("span").html(`$$\\frac{k}{D} = $$ `).node(), {delimiters: [{left: "$$", right: "$$", display: false}]});
         p.append("span").html(`xx`).attr("id", "ratio").style("width", "150px").style("display", "inline-block")
 
         p.append("span").html(` <input type="range" oninput="sliderRatioChanged();" min="0" max="100" value="50" class="slider" id="myRange">`);
@@ -237,7 +237,7 @@ class QuestionVoigtBody extends Question {
         this.input_value = this.input.append("input").style("width", "40px")
 
         this.input2 = d3.select("#question_text").append("span");
-        this.input_text2 = this.input2.append("span").text("Dashpot $$\\gamma$$ = ");
+        this.input_text2 = this.input2.append("span").text("Dashpot $$D$$ = ");
         this.input_value2 = this.input2.append("input").style("width", "40px")
 */
         this.sim2 = new System();
@@ -329,7 +329,7 @@ class QuestionVoigtBody extends Question {
         let slider = addSlider(this);
 
         d3.select("#question_text").append("p").html(`<i>Note: find the simplest representation of a Voigt body.<br/>
-The evaluation will use $$k=1$$ N/m for every spring and $$\\gamma=1$$ Ns/m for each dashpot.</i>`)
+The evaluation will use $$k=1$$ N/m for every spring and $$D=1$$ Ns/m for each dashpot.</i>`)
 
         self = this;
         this.update_slider_callbacks.push(

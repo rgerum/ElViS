@@ -6,19 +6,19 @@ class QuestionDashpot extends Question {
 
 <p>Now we come to the second element, the <b>dashpot</b>.</p>
 <p></p>
-<p>The dashpot has a <b>viscosity</b> $$\\gamma$$. And its force does not depend on the displacement, but on the first derivative of
+<p>The dashpot has a <b>viscosity</b> $$D$$. And its force does not depend on the displacement, but on the first derivative of
 its displacement, the <b>velocity</b> $$v$$.</p>
-<p>How does the force depend on the <b>viscosity</b> $$\\gamma$$ and the <b>velocity</b> $$v$$?</p>
+<p>How does the force depend on the <b>viscosity</b> $$D$$ and the <b>velocity</b> $$v$$?</p>
             `;
         this.test_cases = [{
-            "name": "Dashpot (gamma = 1 Ns/m)",
+            "name": "Dashpot (D = 1 Ns/m)",
             "plot_point": 1,
             "points": [[0, 0], [1, 1]],
             "elements": [["Dashpot", 0, 1, 1, 1]],
             "input": ["Displacement", "Ramp", 1, 0, 1]
         },
             {
-                "name": "Dashpot (gamma = 0.5 Ns/m)",
+                "name": "Dashpot (D = 0.5 Ns/m)",
                 "plot_point": 1,
                 "points": [[0, 0], [1, 1]],
                 "elements": [["Dashpot", 0, 1, 0.5, 1]],
@@ -26,16 +26,16 @@ its displacement, the <b>velocity</b> $$v$$.</p>
             }
         ];
         this.text_finshed = `
-<p>The force of a <b>dashpot</b> is proportional to the <b>velocity</b> with the proportionality constant $$\\gamma$$.</p>
-\\[F = \\gamma \\cdot v \\]
+<p>The force of a <b>dashpot</b> is proportional to the <b>velocity</b> with the proportionality constant $$D$$.</p>
+\\[F = D \\cdot v \\]
         `;
 
-        this.text_allowed_elements = `Use the velocity $$v$$, the viscosity $$gamma$$,`;
+        this.text_allowed_elements = `Use the velocity $$v$$, the viscosity $$D$$,`;
     }
 
     allowed_elements (sim, index) {
         return {
-            gamma : sim.elements[0].strength,
+            D : sim.elements[0].strength,
             t: sim.times[index],
             F: sim.dataF[index],
             v: sim.dataF[index]/sim.elements[0].strength,
@@ -48,7 +48,7 @@ its displacement, the <b>velocity</b> $$v$$.</p>
         this.sim = new System();
         this.sim.end_time = 3;
 
-        addInput("gamma", v=>this.sim.elements[0].strength = v, this.updateSim.bind(this));
+        addInput("D", v=>this.sim.elements[0].strength = v, this.updateSim.bind(this));
         addInput("v", v=>this.sim.external[0].strength = v, this.updateSim.bind(this));
 
         d3.select("#playground_content").append("br")
