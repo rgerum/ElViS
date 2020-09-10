@@ -225,11 +225,10 @@ class QuestionMaxwellBody extends Question {
         this.sim2.updateDrawOffsets();
         this.sim2.simulateOverdamped();
 
+        // add info video
         d3.select("#question_text").append("div").attr("class", "info").text("?")
-            //.append("video").attr("autoplay", "true").attr("loop", "true")
             .append("img").attr("src", "dragdrop.gif")
             .attr("class", "video_info")
-            //.append("source").attr("src", "dragdrop.mp4")
 
         let input_select = d3.select("#question_text").append("select")
         input_select.append("option").attr("value", "Spring").text("Spring")

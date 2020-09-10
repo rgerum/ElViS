@@ -252,6 +252,11 @@ class QuestionVoigtBody extends Question {
         this.sim2.updateDrawOffsets();
         this.sim2.simulateOverdamped();
 
+        // add info video
+        d3.select("#question_text").append("div").attr("class", "info").text("?")
+            .append("img").attr("src", "dragdrop.gif")
+            .attr("class", "video_info")
+
         let input_select = d3.select("#question_text").append("select")
         input_select.append("option").attr("value", "Spring").text("Spring")
         input_select.append("option").attr("value", "Dashpot").text("Dashpot")
