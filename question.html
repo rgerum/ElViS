@@ -549,6 +549,7 @@
             <div class="w3-row">
                 <div class="w3-col m8 s12">
                     <p><button id="button_next" class="w3-button w3-padding-large w3-white w3-border" onclick="EndQuestion();"><b>CONTINUE »</b></button></p>
+                    <p><button id="button_skip" class="w3-button w3-padding-large w3-white w3-border" onclick="EndQuestion();"><b>SKIP »</b></button></p>
                 </div>
                 <div class="w3-col m4 w3-hide-small">
                     <p><span class="w3-padding-large w3-right"><b>Passed &nbsp;</b> <span class="w3-tag" id="tests_passed">0/0</span></span></p>
@@ -839,6 +840,7 @@
         let max_question_index = -1;
         let question_index = -1;
         let question = undefined;
+        let wrong_count = 0;
 
         window.onpopstate = function(event) {
             console.log("popstate", event);
@@ -861,6 +863,7 @@
         }
 
         function StartQuestion() {
+            wrong_count = 0;
             if(max_question_index < question_index)
                 max_question_index = question_index;
             d3.select("#level_buttons").selectAll("span").each(
@@ -1097,10 +1100,25 @@
             if(passed_count >= test_index) {
                 d3.select("#test_displays").append("p").text("Great, your answer passed all the tests!").style("color", "#41a541").style("font-weight", "bold")
                 d3.select("#button_next").style("display", "inline");
+                d3.select("#button_skip").style("display", "none");
             }
             else {
-                d3.select("#test_displays").append("p").text("Oh no, your answer did not pass all the tests, give it another try.").style("color", "red").style("font-weight", "bold")
-                d3.select("#button_next").style("display", "none");
+                wrong_count += 1;
+                if(wrong_count == 1) {
+                    d3.select("#test_displays").append("p").text("Oh no, your answer did not pass all the tests, give it another try.").style("color", "red").style("font-weight", "bold")
+                    d3.select("#button_next").style("display", "none");
+                    d3.select("#button_skip").style("display", "none");
+                }
+                else if(wrong_count == 2) {
+                    d3.select("#test_displays").append("p").text("Oh no, your answer did still not pass all the tests, give it a third try.").style("color", "red").style("font-weight", "bold")
+                    d3.select("#button_next").style("display", "none");
+                    d3.select("#button_skip").style("display", "none");
+                }
+                else {
+                    d3.select("#test_displays").append("p").text("Oh no, your answer did still not pass all the tests. Give it another try or skip the question if you cannot find the answer.").style("color", "red").style("font-weight", "bold")
+                    d3.select("#button_next").style("display", "none");
+                    d3.select("#button_skip").style("display", "inline");
+                }
             }
 
             d3.select("#tests_passed").text(`${passed_count}/${test_index}`);
