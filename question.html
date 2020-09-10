@@ -190,7 +190,7 @@
         }
 
         .level {
-            border: 1.5px solid #484848;
+            border: 2px solid #484848;
             width: 15px;
             height: 15px;
             display: inline-block;
@@ -767,7 +767,7 @@
             let slider = new Slider(d3.select("#playground_content").node(), {range: [0, 500-1], width: 500, value: 0, play:true, step: 10});
 
             parent.update_sim_callbacks.push(function () {
-                if(!slider.playing())
+                if(!slider.playing_timer)
                     slider.play();
             })
 
@@ -824,10 +824,11 @@
             max_question_index = tagToIndex(urlParams.get('question'));
             if(max_question_index != -1) {
                 let i = parseInt(urlParams.get('i'))
-                if(i === undefined || isNaN(i))
+                if(i === undefined || isNaN(i) || i > max_question_index)
                     question_index = max_question_index;
                 else
                     question_index = i;
+                console.log("question_index", question_index, "max_question_index", max_question_index)
                 StartQuestion();
             }
         }
@@ -935,7 +936,10 @@
 
             }
 
-            let text = document.getElementById("equation").value.replace(/,/g, ".");
+            let text = document.getElementById("equation").value.replace(/,/g, ".").trim();
+            console.log("text", text);
+            if(text === "")
+                text = "0";
 
             let sim = new System();
             sim.setData(question.test_cases[0]);
