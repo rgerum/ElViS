@@ -23,7 +23,7 @@ class QuestionParallelForces extends Question {
             }
         ];
         this.text_finshed = `
-<p>Nice! We found that the <b>forces</b> of <b>parallel elements add up</b>.</p>
+<p>   Nice! The individual <b>forces</b> of <b>parallel elements add up</b>.</p>
 \\[F = F_1 + F_2 + \\ldots\\]
         `;
 

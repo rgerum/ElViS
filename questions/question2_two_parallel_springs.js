@@ -4,8 +4,8 @@ class QuestionTwoSpringsParallel extends Question {
         this.title = "Two Parallel Springs";
         this.text = `
 
-<p>Let's have a look at a more complicated system made from <b>two springs in parallel</b>, which means they are connected side-by-side.</p>
-
+<p>Let's look at a more complicated system of <b>two springs</b> connected <b>in parallel</b>.</p>
+   
 <p>Again, use the <b>virtual lab</b> to play around with the parameters.</p>
 
 <p>How can the <b>total force</b> $$F$$ be calculated from the <b>total displacement</b> $$d$$ and the individual <b>spring constants</b> $$k_1$$ and $$k_2$$?</p>
