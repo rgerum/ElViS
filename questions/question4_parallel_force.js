@@ -1,7 +1,7 @@
 class QuestionParallelForces extends Question {
     constructor() {
         super();
-        this.title = "Force for Parallel Elements";
+        this.title = "Forces of Parallel Elements";
         this.text = `
 
 <p>Let's investigate the <b>forces</b> of individual elements in <b>parallel arrangements</b>.</p>
