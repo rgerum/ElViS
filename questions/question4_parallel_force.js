@@ -5,7 +5,7 @@ class QuestionParallelForces extends Question {
         this.text = `
 
 <p>Let's investigate the <b>forces</b> of individual elements in <b>parallel arrangements</b>.</p>
- <p>How do these <b>forces</b> $$F_1$$ and $$F_2$$ relate to the <b>total force</b> $$F$$?</p>
+ <p>How do the <b>forces</b> $$F_1$$ and $$F_2$$ relate to the <b>total force</b> $$F$$?</p>
             `;
         this.test_cases = [{
             "name": "Spring (k1 = 1 N/m, k2 = 1 N/m)",
