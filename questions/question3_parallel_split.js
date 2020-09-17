@@ -1,7 +1,7 @@
 class QuestionParallelSplit extends Question {
     constructor() {
         super();
-        this.title = "Displacement in Parallel Elements";
+        this.title = "Displacement of Parallel Elements";
         this.text = `
 
 <p>Let's analyze in more detail what happens when we deal with elements <b>in parallel</b>.</p>
