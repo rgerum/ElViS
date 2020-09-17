@@ -1,12 +1,12 @@
 class QuestionDashpotSeries extends Question {
     constructor() {
         super();
-        this.title = "Dashpots In Series";
+        this.title = "Dashpots in Series";
         this.text = `
 
 <p>Now we look at two dashpots in series. Recall how spring constants add up in series.</p>
 <p>How does the total force depend on the <b>viscosities</b> $$D_1$$, $$D_2$$ and the <b>velocity</b> $$v$$?</p>
-<p>You might want to use a pen and paper to derive the formula.</p>
+<p>You may want to use pen and paper to derive the relationship.</p>
             `;
         this.test_cases = [{
             "name": "Dashpot (D = 1 Ns/m, D = 1 Ns/m)",
