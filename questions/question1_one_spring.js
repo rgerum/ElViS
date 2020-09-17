@@ -3,7 +3,7 @@ class QuestionOneSpring extends Question {
         super();
         this.title = "Single Spring";
         this.text = `
-<p>The first element we need to build visco-elastic systems is the <b>spring</b>, the elastic element.</p>
+<p>The first element we need for building visco-elastic systems is the <b>spring</b>, the elastic element.</p>
 <p>In the <b>virtual lab</b>, you can experiment with a spring. Change the <b>spring constant $$k$$</b> and stretch the spring by a <b>length $$d$$</b>.</p>
  
 <p>Observe the output <b>force $$F$$</b> and derive an equation connecting $$F$$, $$k$$ and $$d$$.</p>
