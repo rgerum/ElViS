@@ -44,7 +44,7 @@ class QuestionOneSpring extends Question {
 <p>This relationship is called <b>Hooke's law</b>.</p>
         `;
 
-        this.text_allowed_elements = `Use the spring constant \\(k\\), the cange in length \\(d\\),`;
+        this.text_allowed_elements = `Use the spring constant \\(k\\), the change in length \\(d\\),`;
     }
 
     allowed_elements (sim, index) {
