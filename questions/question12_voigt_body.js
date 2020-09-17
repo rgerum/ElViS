@@ -91,7 +91,7 @@ class QuestionVoigtBody extends Question {
 
         d3.select("#info_text").append("p").html("Since the spring and the dashpot are aligned in <b>parallel</b>, we have eliminated the \"<b>jump</b>\" in deformation we saw in the Maxwell body.")
         d3.select("#info_text").append("p").html("There is also <b>no permanent</b> deformation after the force is removed.")
-        d3.select("#info_text").append("p").html("However, the parallel dashpot \"<b>slows down</b>\" the deformation of the spring, and the qualitative deformation of the Voigt body depends strongly on the <b>relationship</b> between spring constant and damping coefficient.")
+        d3.select("#info_text").append("p").html("However, the parallel dashpot \"<b>slows down</b>\" the deformation of the spring, and the qualitative deformation of the Voigt body depends strongly on the <b>relationship</b> between spring constant and the viscosity.")
 
         function addPlotDisplacement(parent, title) {
             let plot1 = new Plot(d3.select("#info_text").append("svg"), {
