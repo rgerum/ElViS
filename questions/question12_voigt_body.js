@@ -8,7 +8,7 @@ class QuestionVoigtBody extends Question {
 
 <p>You see that the <b>deformation response</b> here is much <b>smoother</b> than that of a Maxwell body.</p>
  
- <p>This model can be used to describe the deformation of an <b>elastic cell</b> (e.g. a blood cell) within a <b>fluid</b> (e.g. blood). </p>
+ <p>This model can be used to describe the deformation of a <b>fluid-filled elastic shell</b> (e.g. a blood cell). </p>
  
  <p>Again, use the drag-and-drop editor below to find the simplest representation of the Voigt body, using springs and dashports.</p>
             `;
@@ -89,9 +89,9 @@ class QuestionVoigtBody extends Question {
 
         this.display2 = addDisplay(this, 300);
 
-        d3.select("#info_text").append("p").html("Since the spring and the dashpot are aligned in <b>parallel</b>, we have eliminated the rather unrealistic \"<b>jump</b>\" in deformation we saw in the Maxwell body.")
-        d3.select("#info_text").append("p").html("There is also <b>no plastic</b> deformation for the Voigt body, as the spring determines the total amplitude of deformation.")
-        d3.select("#info_text").append("p").html("However, the parallel dashpot \"<b>slows down</b>\" the deformation of the spring, and the qualitative deformation of the Voigt body depends heavily on the <b>relationship</b> between spring constant and damping coefficient.")
+        d3.select("#info_text").append("p").html("Since the spring and the dashpot are aligned in <b>parallel</b>, we have eliminated the \"<b>jump</b>\" in deformation we saw in the Maxwell body.")
+        d3.select("#info_text").append("p").html("There is also <b>no permanent</b> deformation after the force is removed.")
+        d3.select("#info_text").append("p").html("However, the parallel dashpot \"<b>slows down</b>\" the deformation of the spring, and the qualitative deformation of the Voigt body depends strongly on the <b>relationship</b> between spring constant and damping coefficient.")
 
         function addPlotDisplacement(parent, title) {
             let plot1 = new Plot(d3.select("#info_text").append("svg"), {
