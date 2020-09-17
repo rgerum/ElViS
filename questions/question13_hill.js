@@ -6,24 +6,19 @@ class QuestionHill extends Question {
 
 <p>What you see here is <b>A.V. Hill</b>’s famous <b>quick-release experiment</b>.</p>
 <p>
- Hill isolated a <b>frog muscle</b> and put it into an apparatus that he designed to study the muscle’s response to a <b>sudden change in force</b>.
+ Hill isolated a <b>frog muscle</b> and mounted it to an apparatus that he designed to study the muscle’s response to a <b>sudden change in force</b>.
  </p>
  <p> 
  The muscle is electrically or chemically <b>stimulated</b> so that it <b>generates force</b>.
   However, it <b>cannot change</b> its length because it is placed between a fixed end (bottom) and a bar (top) that is hold in place via an electrically controlled <b>catch mechanism</b>.
   </p>
   <p>
-   When after a while the muscle has generated its maximum force, the catch mechanism can be released.
+   When the muscle has reached a constant (isometric) force, the catch mechanism is released, and the force acting on the muscle depends on an adjustable weight.
 </p>
-<p> 
-   Then, the force acting on the muscle is no longer its <b>own maximum force</b> (according to Newton’s third law),
-    but an <b>external force</b> that is adjusted via a weight and level configuration.
-    </p>
     <p>
-     The effective force is chosen in such a way that it is <b>smaller</b> than the <b>maximum muscle force</b>.
-      Accordingly, the muscle <b>shortens</b> when the catch mechanism is released. </p>
+     If the force is <b>smaller</b> than the <b>maximum muscle force</b>, the muscle <b>shortens</b>.</p>
 <p>
-In the animation you see the resulting course of muscle length over time as Hill observed it in his experiment. Use drag-and-drop feature and your knowledge of viscoelastic systems to find a simple muscle model consisting of springs and dashpots that qualitatively describes the experimental findings.
+In the animation, you see the resulting muscle length over time just as Hill observed it in his experiment. Use the drag-and-drop feature and your knowledge of viscoelastic systems to find a simple muscle model consisting of springs and dashpots that qualitatively describes the experimental findings.
 </p>
             `;
         this.test_cases = [{
@@ -77,7 +72,7 @@ In the animation you see the resulting course of muscle length over time as Hill
                         })*/
         }
 
-        d3.select("#info_text").append("p").html("Congratulations, you have re-created the famous <b>Hill active state model</b>!")
+        d3.select("#info_text").append("p").html("Congratulations, you have re-created Hill's famous <b>active state model of muscle</b>!")
 
         this.sim3 = new System();
         //this.sim2.end_time = 3;
@@ -93,13 +88,12 @@ In the animation you see the resulting course of muscle length over time as Hill
 
         this.display2 = addDisplay(this, 300);
 
-        d3.select("#info_text").append("p").html(`The <b>immediate decrease</b> in muscle length can be recreated by a <b>single spring</b>. 
+        d3.select("#info_text").append("p").html(`The <b>sudden decrease</b> in muscle length after release can be modeled by a <b>spring</b>. 
  The subsequent <b>exponential decrease</b> in muscle length can be modeled by a <b>spring</b> and <b>dashpot</b> in <b>parallel</b> (Voigt body).`)
-        d3.select("#info_text").append("p").html(`Hill published this model in <b>1938</b>. Despite its <b>simplicity</b>, it can <b>qualitatively</b> describe many mechanical aspects of muscles and is a classic in physiology and biophysics. `)
+        d3.select("#info_text").append("p").html(`Hill published this model in <b>1938</b>. Despite its <b>simplicity</b>, it can <b>qualitatively</b> describe many mechanical aspects of muscle. `)
         d3.select("#info_text").append("img").attr("title", "Archibald Vivian Hill").attr("src", "https://upload.wikimedia.org/wikipedia/commons/c/c9/Archibald_Vivian_Hill.jpg").style("margin", "0 auto").style("display", "block").style("width", "150px")
         d3.select("#info_text").append("p").text("https://upload.wikimedia.org/wikipedia/commons/c/c9/Archibald_Vivian_Hill.jpg").style("font-size", "0.5em").style("color", "gray")
-        d3.select("#info_text").append("p").html(`You have finished the <b>ElViS Lesson</b>. We would be happy if you would take the time now to answer some questions about your experience with ElViS:`)
-        d3.select("#info_text").append("a").attr("href", "https://forms.gle/twK2fNJa3A1jG36RA").html(`https://forms.gle/twK2fNJa3A1jG36RA`)
+        d3.select("#info_text").append("p").html(`Congratulations! You have finished the <b>ElViS Lesson</b>.`)
 
         function addPlotDisplacement(parent, title) {
             let plot1 = new Plot(d3.select("#info_text").append("svg"), {
