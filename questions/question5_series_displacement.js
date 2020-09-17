@@ -1,10 +1,10 @@
 class QuestionSeriesDisplacement extends Question {
     constructor() {
         super();
-        this.title = "Displacements for Serial Elements";
+        this.title = "Displacements of Serial Elements";
         this.text = `
 
-<p>Now we have a take at a system of <b>two springs</b> in <b>series</b>.</p> 
+<p>Now take a look at a system of <b>two springs</b> in <b>series</b>.</p> 
 <p>How can the <b>total displacement</b> $$d$$ of the system be calculated from the displacements $$d_1$$ and $$d_2$$ of the <b>individual springs</b>?</p>
             `;
         this.test_cases = [{
