@@ -23,7 +23,7 @@ class QuestionParallelSplit extends Question {
             }
         ];
         this.text_finshed = `
-        <p>We have seen that the <b>displacement</b> of an individual element of a group of <b>parallel</b> elements is <b>the same</b> as the total
+        <p>We have seen that the <b>displacement</b> of an individual element within a group of <b>parallel</b> elements is <b>the same</b> as the total
 displacement.</p>
 \\[d = d_1 = d_2\\]
         `;
