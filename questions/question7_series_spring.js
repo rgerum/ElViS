@@ -1,10 +1,10 @@
 class QuestionSeriesSpring extends Question {
     constructor() {
         super();
-        this.title = "Spring Constant for Serial Elements";
+        this.title = "Effective Spring Constant for Serial Arrangements";
         this.text = `
 
-<p>Our final consideration on springs is how the <b>spring constants</b> of <b>serial</b> elements contribute to a total spring constant.</p>
+<p>Finally, we will take a look at how the <b>spring constants</b> of <b>serial</b> elements contribute to a total spring constant.</p>
 <p>For simplicity we use two springs with <b>the same</b> spring constant $$k$$ ($$k1=k2=k$$).</p>
 <p>How does the <b>total force</b> of the two springs depend on the <b>spring constants</b> and the <b>total displacement</b> $$d$$?</p>
             `;
