@@ -4,7 +4,7 @@ class QuestionDashpotParallel extends Question {
         this.title = "Parallel Dashpots";
         this.text = `
 
-<p>Let's now consider two dashpots in parallel? Remember what you have learned about springs in parallel.</p>
+<p>Let's now consider two dashpots in parallel. Remember what you have learned about springs in parallel.</p>
 <p>How does the total force depend on the <b>viscosities</b> $$D_1$$, $$D_2$$ and the <b>velocity</b> $$v$$?</p>
             `;
         this.test_cases = [{
