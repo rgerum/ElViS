@@ -6,7 +6,7 @@ class QuestionDashpot extends Question {
 
 <p>Now we come to the second element, the <b>dashpot</b>.</p>
 <p></p>
-<p>The dashpot has a <b>viscosity</b> $$D$$. And its force does not depend on the displacement, but on the first derivative of
+<p>The dashpot has a <b>viscosity</b> $$D$$. Its force does not depend on the displacement, but on the first derivative of
 its displacement, the <b>velocity</b> $$v$$.</p>
 <p>How does the force depend on the <b>viscosity</b> $$D$$ and the <b>velocity</b> $$v$$?</p>
             `;
