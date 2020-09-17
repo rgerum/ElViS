@@ -1,7 +1,7 @@
 class QuestionSeriesForce extends Question {
     constructor() {
         super();
-        this.title = "Force for Serial Elements";
+        this.title = "Forces of Serial Elements";
         this.text = `
 
 <p>We continue with investigating the <b>forces</b> of <b>serial</b> elements.</p>
