@@ -6,12 +6,12 @@ class QuestionMaxwellBody extends Question {
 
 <p><b>Biological matter</b> usually shows both viscous and elastic behavior and can therefore be modeled as a <b>combination</b> of springs and dashpots.</p>
  <p>A simple standard model is the so-called <b>Maxwell body</b>.</p>
-  <p>In the virtual lab you can see how a Maxwell body deforms when a rectangular force is applied to it: There is an <b>initial deformation</b>
+  <p>In the virtual lab, you can see how a Maxwell body deforms when a rectangular force is applied to it: There is an <b>initial deformation</b>
    when the force is applied, then the deformation <b>increases</b> during the application of the force, and only <b>partially recovers</b> when the force is no longer applied.</p>
    <p>Such behavior can be observed, for example, in <b>soft polymers</b>, <b>biological tissue</b>, and <b>fresh concrete</b>.</p>
    
    
-   <p>Remember what you have learned about springs and dashpot and use the drag-and-drop editor below to find the <b>simplest</b> representation of a Maxwell body 
+   <p>Remember what you have learned about springs and dashpots. Use the drag-and-drop editor below to find the <b>simplest</b> representation of a Maxwell body 
    using as few linear elements (springs/ dashpots) as possible. <b>Drag</b> the points to create new elements. <b>Click</b> on an element to change its properties.</p>
     
 <!--    You can also change the spring constants/damping coefficients to get an exact deformation output like in the example plot. Click on the Evaluate button to have ElViS check your arrangement.
@@ -92,7 +92,7 @@ class QuestionMaxwellBody extends Question {
 
         d3.select("#info_text").append("p").html("The deformation will <b>immediately increase</b> by a certain amount due to the elastic properties of the <b>spring</b>.")
         d3.select("#info_text").append("p").html("While the force is acting on the Maxwell body, the deformation will <b>constantly increase</b> because of the viscous properties of the <b>dashpot</b>.")
-        d3.select("#info_text").append("p").html("Then, when the force is going back to 0, the deformation will <b>decrease</b> by the <b>elastic</b>  component while the <b>viscous</b> deformation <b>stays</b>.")
+        d3.select("#info_text").append("p").html("Then, when the force is going back to 0, the deformation will <b>decrease</b> due to the <b>elastic</b> recoil of the spring while the <b>viscous</b> deformation of the dashpot <b>remains</b>.")
 
         function addPlotDisplacement(parent, title) {
             let plot1 = new Plot(d3.select("#info_text").append("svg"), {
@@ -135,7 +135,6 @@ class QuestionMaxwellBody extends Question {
         }
 
         addPlotDisplacement(this, "");
-        d3.select("#info_text").append("p").html("This is called <b>plastic deformation</b>.")
     }
 
     allowed_elements (sim, index) {
